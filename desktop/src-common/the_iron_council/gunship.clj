@@ -98,8 +98,12 @@
                          :else x)
         y-anchored (cond (> y c/game-height-adj) c/game-height-adj
                          (< y 0) 0
-                         :else y)]
-    (body-position! entity x-anchored y-anchored (mv-fn angle c/yaw-change-amt)))
+                         :else y)
+        angle-anchored (mv-fn angle c/yaw-change-amt)
+        angle-anchored (case direction
+                         :right (if (> angle-anchored c/yaw-delta-max) c/yaw-delta-max angle-anchored)
+                         :left (if (< angle-anchored (- c/yaw-delta-max)) (- c/yaw-delta-max) angle-anchored))]
+    (body-position! entity x-anchored y-anchored angle-anchored))
   entity)
 
 (defn- angle-reset [{:keys [:x :y :angle] :as entity}]
