@@ -59,6 +59,8 @@
   ([seed c-scheme]
    (let [pixel-map-list (create-pixel-map-list seed c-scheme)
          pix-map (pixmap* 16 16 (pixmap-format :r-g-b-a8888))]
+     ;(pixmap! pix-map :set-color (color :white))
+     ;(pixmap! pix-map :fill-rectangle 0 0 16 16)
      (doseq [pixel pixel-map-list] (draw-rect-pixelmap pix-map pixel))
      (assoc (texture pix-map) :seed seed))))
 
@@ -86,7 +88,7 @@
        (body-position! (c/screen-to-world (/ c/game-width 2)) c/ship-y-start 0)
        (body! :set-linear-velocity 0 0)))))
 
-(defn- move [screen entities {:keys [:x :y :angle :has-doppel?] :as entity} direction]
+(defn- move [screen entities {:keys [:x :y :angle] :as entity} direction]
   (let [mv-fn (case direction
                 :right +
                 :left -)
@@ -97,15 +99,21 @@
         y-anchored (cond (> y c/game-height-adj) c/game-height-adj
                          (< y 0) 0
                          :else y)]
-    (body-position! entity x-anchored y-anchored angle))
+    (body-position! entity x-anchored y-anchored (mv-fn angle c/yaw-change-amt)))
   entity)
 
+(defn- angle-reset [{:keys [:x :y :angle] :as entity}]
+  (let [ccw? (< angle 0)
+        yaw-reset-fn (if ccw? + -)
+        yaw-reset-amt (if ccw? (if (< (- angle) c/yaw-reset-amt) (- angle) c/yaw-reset-amt)
+                               (if (< angle c/yaw-reset-amt) angle c/yaw-reset-amt))]
+    (body-position! entity x y (yaw-reset-fn angle yaw-reset-amt))))
+
 (defn move-player-tick [screen entities {:keys [:x :y :angle] :as entity}]
-;  (if (:gunship? entity
-       (cond
-         (key-pressed? :dpad-right)
-         (move screen entities entity :right)
-         (key-pressed? :dpad-left)
-         (move screen entities entity :left)
-         :else entity)
-    entity)
+   (cond
+     (key-pressed? :dpad-right)
+     (move screen entities entity :right)
+     (key-pressed? :dpad-left)
+     (move screen entities entity :left)
+     :else (angle-reset entity))
+   entity)

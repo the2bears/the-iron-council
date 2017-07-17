@@ -19,6 +19,8 @@
 (def ^:const ship-mp-yoffset 10)
 
 (def ^:const gunship-speed (screen-to-world 1.5))
+(def ^:const yaw-change-amt 1.5)
+(def ^:const yaw-reset-amt 1.75)
 
 (defn hues-fn [seed]
   (vector (/ (bit-and seed 0xff) 1020.0)
