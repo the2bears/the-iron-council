@@ -45,7 +45,7 @@
 
 (defn- create-pixel-map-list
   ([seed c-model]
-   (let [ship-map (psc/color-pixel-ship (psc/create-pixel-ship (assoc bollinger/model :seed seed)) c-model)
+   (let [ship-map (psc/color-pixel-ship (psc/create-pixel-ship (assoc c/gunship-model :seed seed)) c-model)
          tags (keys (:pixels ship-map))
          pixels (:pixels ship-map)
          shape-builder (fn[s] (reduce (fn[acc n] (conj acc n)) [] s))]
@@ -58,9 +58,7 @@
    (create-pixel-ship-texture seed bollinger/color-scheme))
   ([seed c-scheme]
    (let [pixel-map-list (create-pixel-map-list seed c-scheme)
-         pix-map (pixmap* 16 16 (pixmap-format :r-g-b-a8888))]
-     ;(pixmap! pix-map :set-color (color :white))
-     ;(pixmap! pix-map :fill-rectangle 0 0 16 16)
+         pix-map (pixmap* 16 32 (pixmap-format :r-g-b-a8888))]
      (doseq [pixel pixel-map-list] (draw-rect-pixelmap pix-map pixel))
      (assoc (texture pix-map) :seed seed))))
 
@@ -76,10 +74,10 @@
 
 (defn create-ship-entity!
   ([screen]
-   (let [pixel-ship (create-pixel-ship-texture Integer/MAX_VALUE c/gunship-color-scheme)]
+   (let [pixel-ship (create-pixel-ship-texture Long/MAX_VALUE c/gunship-color-scheme)]
      (doto (assoc pixel-ship
              :body (create-ship-body! screen)
-             :width (c/screen-to-world 16) :height (c/screen-to-world 16)
+             :width (c/screen-to-world 16) :height (c/screen-to-world 32)
              :id :gunship
              :gunship? true
              :render-layer 90
