@@ -88,20 +88,16 @@
        (body-position! (c/screen-to-world (/ c/game-width 2)) c/ship-y-start 0)
        (body! :set-linear-velocity 0 0)))))
 
-(defn- angle-reset [{:keys [:x :y :angle] :as entity}]
-  (let [ccw? (< angle 0)
-        yaw-reset-fn (if ccw? + -)
-        yaw-reset-amt (if ccw? (if (< (- angle) c/yaw-reset-amt) (- angle) c/yaw-reset-amt)
-                               (if (< angle c/yaw-reset-amt) angle c/yaw-reset-amt))]
-    (body-position! entity x y (yaw-reset-fn angle yaw-reset-amt))
-    entity))
-
-(defn- angle-reset2 [angle]
+(defn- angle-reset [angle]
   (let [ccw? (< angle 0)
         yaw-reset-fn (if ccw? + -)
         yaw-reset-amt (if ccw? (if (< (- angle) c/yaw-reset-amt) (- angle) c/yaw-reset-amt)
                           (if (< angle c/yaw-reset-amt) angle c/yaw-reset-amt))]
     (yaw-reset-fn angle yaw-reset-amt)))
+
+(defn- angle-reset-body [{:keys [:x :y :angle] :as entity}]
+  (body-position! entity x y (angle-reset angle))
+  entity)
 
 (defn- just-a [a b]
   a)
@@ -127,7 +123,7 @@
         angle-anchored (case x-dir
                          :right (if (> angle-anchored c/yaw-delta-max) c/yaw-delta-max angle-anchored)
                          :left (if (< angle-anchored (- c/yaw-delta-max)) (- c/yaw-delta-max) angle-anchored)
-                         :none (angle-reset2 angle-anchored))]
+                         :none (angle-reset angle-anchored))]
     (body-position! entity x-anchored y-anchored angle-anchored)
     entity))
 
@@ -151,4 +147,4 @@
                 :else :none)]
     (if (or x-move? y-move?)
         (move entity x-dir x-delta y-dir y-delta)
-        (angle-reset entity))))
+        (angle-reset-body entity))))
