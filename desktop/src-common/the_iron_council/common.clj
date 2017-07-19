@@ -25,6 +25,16 @@
 (def ^:const yaw-reset-amt 1.75)
 (def ^:const yaw-delta-max 30)
 
+(def ^:const bullet-width (screen-to-world 2))
+(def ^:const bullet-height (screen-to-world 2))
+(def ^:const bullet-speed (screen-to-world 280))
+(def ^:const bullet-half-width (/ bullet-width 2))
+(def ^:const bullet-half-height (/ bullet-height 2))
+
+(def ^:const oob-padding (screen-to-world 20))
+(def ^:const oob-x-length (+ game-width-adj (* 2 oob-padding)))
+(def ^:const oob-y-length (+ game-height-adj (* 2 oob-padding)))
+
 (defn hues-fn [seed]
   (vector (/ (bit-and seed 0xff) 1020.0)
           (/ (bit-shift-right (bit-and seed 0xff00) 8) 1020.0)
@@ -37,14 +47,14 @@
                                 (assoc :bright-delta 0.11)
                                 (assoc :sat-multipliers [ -2 -1  0 1 0 -1 0 1 2 1 0 -1 0 0 0 -1 0 -1 0 -1 0 -1 0 -1])))
                                 ;(assoc :bright-multipliers [-3 -2 -1 0 1  2 3 3 2 1 0 -1 -2 -3])))
-(defn add-cells [model]
+(defn- add-cells [model]
   (let [hull ((comp :hull :model) model)
         new-hull  (into [] (concat hull [{:x 5 :y 11} {:x 5 :y 12}
                                          {:x 5 :y 13} {:x 5 :y 14}
                                          {:x 5 :y 15} {:x 5 :y 16}
                                          {:x 5 :y 17} {:x 5 :y 18}
-                                         {:x 5 :y 19} {:x 5 :y 20}]))]
-                                         ;{:x 5 :y 21} {:x 5 :y 22}]))]
+                                         {:x 5 :y 19} {:x 5 :y 20}
+                                         {:x 4 :y 19}]))] ;{:x 5 :y 22}]))]
     (-> model
         (assoc-in [:model :hull] new-hull)
         (assoc :ship-y 24))))
