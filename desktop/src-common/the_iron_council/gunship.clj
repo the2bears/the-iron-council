@@ -109,6 +109,15 @@
                   :up +
                   :down -
                   :none just-a)
+        yaw-mv-fn (if c/yaw-with-x
+                    (case x-dir
+                      :right -
+                      :left +
+                      :none just-a)
+                    (case x-dir
+                      :right +
+                      :left -
+                      :none just-a))
         x (x-mv-fn x x-delta)
         y (y-mv-fn y y-delta)
         x-anchored (cond (> x c/game-width-adj) c/game-width-adj
@@ -117,11 +126,16 @@
         y-anchored (cond (> y c/game-height-adj) c/game-height-adj
                          (< y 0) 0
                          :else y)
-        angle-anchored (if (c/cannon-key-pressed?) angle (x-mv-fn angle c/yaw-change-amt))
-        angle-anchored (case x-dir
-                         :right (if (> angle-anchored c/yaw-delta-max) c/yaw-delta-max angle-anchored)
-                         :left (if (< angle-anchored (- c/yaw-delta-max)) (- c/yaw-delta-max) angle-anchored)
-                         :none (angle-reset angle-anchored))]
+        angle-anchored (if (c/cannon-key-pressed?) angle (yaw-mv-fn angle c/yaw-change-amt))
+        angle-anchored (if c/yaw-with-x
+                         (case x-dir
+                           :right (if (< angle-anchored (- c/yaw-delta-max)) (- c/yaw-delta-max) angle-anchored)
+                           :left (if (> angle-anchored c/yaw-delta-max) c/yaw-delta-max angle-anchored)
+                           :none (angle-reset angle-anchored))
+                         (case x-dir
+                           :right (if (> angle-anchored c/yaw-delta-max) c/yaw-delta-max angle-anchored)
+                           :left (if (< angle-anchored (- c/yaw-delta-max)) (- c/yaw-delta-max) angle-anchored)
+                           :none (angle-reset angle-anchored)))]
     (body-position! entity x-anchored y-anchored angle-anchored)
     entity))
 
