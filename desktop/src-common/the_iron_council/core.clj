@@ -23,7 +23,7 @@
     :in-game
     (cond
       (and (get screen :fire-when-ready true)
-           (key-pressed? :x))
+           (c/cannon-key-pressed?)) ;(key-pressed? :x))
       (if-let [gunship (first (filter #(:gunship? %) entities))]
         (let [x (:x gunship)
               y (:y gunship)

@@ -91,7 +91,7 @@
         yaw-reset-fn (if ccw? + -)
         yaw-reset-amt (if ccw? (if (< (- angle) c/yaw-reset-amt) (- angle) c/yaw-reset-amt)
                           (if (< angle c/yaw-reset-amt) angle c/yaw-reset-amt))]
-    (yaw-reset-fn angle yaw-reset-amt)))
+    (if (c/cannon-key-pressed?) angle (yaw-reset-fn angle yaw-reset-amt))))
 
 (defn- angle-reset-body [{:keys [:x :y :angle] :as entity}]
   (body-position! entity x y (angle-reset angle))
@@ -117,7 +117,7 @@
         y-anchored (cond (> y c/game-height-adj) c/game-height-adj
                          (< y 0) 0
                          :else y)
-        angle-anchored (x-mv-fn angle c/yaw-change-amt)
+        angle-anchored (if (c/cannon-key-pressed?) angle (x-mv-fn angle c/yaw-change-amt))
         angle-anchored (case x-dir
                          :right (if (> angle-anchored c/yaw-delta-max) c/yaw-delta-max angle-anchored)
                          :left (if (< angle-anchored (- c/yaw-delta-max)) (- c/yaw-delta-max) angle-anchored)

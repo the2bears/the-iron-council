@@ -1,5 +1,6 @@
 (ns the-iron-council.common
-  (:require [pixel-ships.bollinger :as bollinger :refer [color-scheme]]))
+  (:require [pixel-ships.bollinger :as bollinger :refer [color-scheme]]
+            [play-clj.core :refer [key-pressed?]]))
 
 (def debug true)
 
@@ -34,6 +35,10 @@
 (def ^:const oob-padding (screen-to-world 20))
 (def ^:const oob-x-length (+ game-width-adj (* 2 oob-padding)))
 (def ^:const oob-y-length (+ game-height-adj (* 2 oob-padding)))
+
+(def ^:const cannon-key :x)
+(defn cannon-key-pressed? []
+  (key-pressed? :x))
 
 (defn hues-fn [seed]
   (vector (/ (bit-and seed 0xff) 1020.0)
