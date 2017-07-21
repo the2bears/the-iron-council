@@ -30,7 +30,7 @@
               a (:angle gunship)]
           (update! screen :fire-when-ready false)
           (add-timer! screen :refresh-shot 0.2)
-          (conj entities (bullet/create-bullet! screen x (+ 0.1 y) a)))
+          (conj entities (bullet/create-bullet! screen x y a)))
         entities)
       :else entities)
     entities))
@@ -108,10 +108,14 @@
                 (if c/debug
                   (.render debug-renderer world (.combined camera)))
                 entities))
-            :else (->> entities
-                       ;(check-game-status screen)
-                       (render! screen)))))
-
+            :else
+            (let [entities
+                  (->> entities
+                           ;(check-game-status screen)
+                           (render! screen))]
+               (if c/debug
+                 (.render debug-renderer world (.combined camera)))
+               entities))))
 
   :on-key-up
   (fn [screen entities]
