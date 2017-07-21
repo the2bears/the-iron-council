@@ -12,7 +12,7 @@
 
 ## How to try it out?
 
-Clone the repository and build it locall with Lein. You'll also need my [pixel-ships](https://github.com/the2bears/pixel-ships) library and my fork of [play-clj](https://github.com/the2bears/play-clj) (Why? The Box2D shapes won't overlap correctly with the textures during rotation without my patch). Build and install these locally.
+Clone the repository and build it locally with Lein. You'll also need my [pixel-ships](https://github.com/the2bears/pixel-ships) library and my fork of [play-clj](https://github.com/the2bears/play-clj) (Why? The Box2D shapes won't overlap correctly with the textures during rotation without my patch). Build and install these locally.
 
 
 ## License
