@@ -81,6 +81,9 @@
              :id :gunship
              :gunship? true
              :render-layer 90
+             :x (c/screen-to-world (/ c/game-width 2))
+             :y c/ship-y-start
+             :angle 0
              :translate-x (- (c/screen-to-world c/ship-mp-xoffset))
              :translate-y (- (c/screen-to-world c/ship-mp-yoffset)))
        (body-position! (c/screen-to-world (/ c/game-width 2)) c/ship-y-start 0)

@@ -16,6 +16,7 @@
   (->> entities
        (map (fn [entity]
               (cond (:gunship? entity) (gs/move-player-tick screen entities entity)
+                    (:bullet? entity) (bullet/handle-bullet screen entity)
                     :else entity)))))
 
 (defn check-for-input [screen entities]
@@ -46,7 +47,7 @@
          float-array
          (chain-shape :create-chain)
          (fixture-def
-          :is-sensor true
+         ; :is-sensor true
           :density 1 :restitution 1 :shape)
          (body! body :create-fixture))
     body))
@@ -148,7 +149,6 @@
           entity2 (second-entity screen entities)]
       ;(prn :entity (:id entity) :entity2 (:id entity2))
       (cond
-        (:bullet? entity) (bullet/handle-collision entity entity2 screen entities)
         (:bullet? entity2) (bullet/handle-collision entity2 entity screen entities)))))
 
 (defgame the-iron-council-game
