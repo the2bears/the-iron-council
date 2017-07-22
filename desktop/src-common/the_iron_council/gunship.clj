@@ -10,8 +10,8 @@
 (def p-per-r 1)
 
 (defn- hsv-to-rgb
-                                        ;Convert hsv to rgb
-                                        ;Inputs are floats 0<i<1
+  ;Convert hsv to rgb
+  ;Inputs are floats 0<i<1
   ([[hue saturation value alpha]]
    (if (= saturation 0)
      [value value value alpha]

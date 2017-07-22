@@ -1,8 +1,8 @@
 (ns the-iron-council.common
   (:require [pixel-ships.bollinger :as bollinger :refer [color-scheme]]
-            [play-clj.core :refer [key-pressed?]]))
+            [play-clj.core :refer [color key-pressed?]]))
 
-(def debug true)
+(def debug false)
 
 (def ^:const s-to-w-divider 50.0)
 (defn screen-to-world [x]
@@ -27,13 +27,17 @@
 (def ^:const yaw-reset-amt 1.75)
 (def ^:const yaw-delta-max 30)
 
-(def ^:const bullet-width (screen-to-world 2))
-(def ^:const bullet-height (screen-to-world 2))
+(def ^:const bullet-width (screen-to-world 6))
+(def ^:const bullet-height (screen-to-world 14))
 (def ^:const bullet-speed (screen-to-world 300))
 (def ^:const bullet-half-width (/ bullet-width 2))
 (def ^:const bullet-half-height (/ bullet-height 2))
-(def ^:const create-bullet-x-offset 0.0)
-(def ^:const create-bullet-y-offset 0.1)
+(def ^:const bullet-hitbox-x bullet-half-width)
+(def ^:const bullet-hitbox-y (/ (+ bullet-height bullet-half-height) 2))
+(def ^:const bullet-hitbox-side (screen-to-world 2))
+(def bullet-rects [[(color :orange) [2 0 2 14 1 1 4 9 0 2 6 4]]
+                   [(color :yellow) [2 1 2 9]]
+                   [(color :white) [1 2 4 4]]])                                        ;
 
 (def ^:const oob-padding (screen-to-world 30))
 (def ^:const oob-x-length (+ game-width-adj (* 2 oob-padding)))
