@@ -2,6 +2,10 @@
 
 *The Iron Council* - A Lone Gunship Aginst the Enemy
 
+Click on the image to see the latest video.
+
+[![Recent Video](http://img.youtube.com/vi/6bSdbxNt5Oo/3.jpg)](http://www.youtube.com/watch?v=6bSdbxNt5Oo)
+
 ## Features
 
   * Player controlled gunship, with yaw movement (either in the direction of left/right movement, or opposite it). **Done**
