@@ -74,7 +74,7 @@
 
 (defn create-ship-entity!
   ([screen]
-   (let [pixel-ship (create-pixel-ship-texture Long/MAX_VALUE c/gunship-color-scheme)]
+   (let [pixel-ship (bundle (create-pixel-ship-texture Long/MAX_VALUE c/gunship-color-scheme))]
      (doto (assoc pixel-ship
              :body (create-ship-body! screen)
              :width (c/screen-to-world 16) :height (c/screen-to-world 32)

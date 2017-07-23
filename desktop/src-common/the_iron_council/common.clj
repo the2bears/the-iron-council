@@ -58,7 +58,7 @@
                                 (assoc :bright-mid 0.36)
                                 (assoc :bright-delta 0.11)
                                 (assoc :sat-multipliers [ -2 -1  0 1 0 -1 0 1 2 1 0 -1 0 0 0 -1 0 -1 0 -1 0 -1 0 -1])))
-                                ;(assoc :bright-multipliers [-3 -2 -1 0 1  2 3 3 2 1 0 -1 -2 -3])))
+
 (defn- add-cells [model]
   (let [hull ((comp :hull :model) model)
         new-hull  (into [] (concat hull [{:x 5 :y 11} {:x 5 :y 12}
@@ -72,4 +72,22 @@
         (assoc :ship-y 24))))
 
 (def gunship-model (add-cells bollinger/model))
+
+(def gatling-model
+  {:name :gatlin
+   :seed Integer/MAX_VALUE
+   :ship-size 8
+   :ship-x 6
+   :ship-y 8
+   :model {:solid [{:x 1, :y 0} {:x 2, :y 0} {:x 0, :y 3} {:x 1, :y 3} {:x 2, :y 3}]
+           :hull [{:x 2, :y 1} {:x 2, :y 2} {:x 2, :y 4} {:x 2, :y 5} {:x 2, :y 6} {:x 1, :y 4} {:x 1, :y 5}]}})
+
+(def rocket-model
+  {:name :rocket
+   :seed Integer/MAX_VALUE
+   :ship-size 8
+   :ship-x 6
+   :ship-y 8
+   :model {:solid [{:x 0, :y 0} {:x 0, :y 4} {:x 1, :y 4} {:x 2, :y 4}]
+           :hull [{:x 1, :y 1} {:x 1, :y 2} {:x 1, :y 3} {:x 2, :y 1} {:x 2, :y 2} {:x 2, :y 3} {:x 2, :y 5} {:x 2, :y 6}]}})
 
