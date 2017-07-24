@@ -80,13 +80,13 @@
     body))
 
 (defn create-ship-entity!
-  ([screen]
+  ([{:keys [option-type] :as screen}]
    (let [pixel-ship (-> (create-pixel-ship-texture Long/MAX_VALUE c/gunship-model c/gunship-color-scheme)
                         (assoc :translate-x (- (c/screen-to-world c/ship-mp-xoffset))
                                :translate-y (- (c/screen-to-world c/ship-mp-yoffset))
                                :width (c/screen-to-world 16)
                                :height (c/screen-to-world 32)))
-         option-texture (create-option-texture Long/MAX_VALUE c/gatling-model c/gunship-color-scheme)
+         option-texture (create-option-texture Long/MAX_VALUE (if (= option-type :rocket) c/rocket-model c/gatling-model) c/gunship-color-scheme)
          left-option (assoc option-texture :translate-x (- (c/screen-to-world c/ship-option-xoffset-left))
                                            :translate-y (- (c/screen-to-world c/ship-option-yoffset))
                                            :width (c/screen-to-world 8)

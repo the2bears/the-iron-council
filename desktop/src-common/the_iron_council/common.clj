@@ -2,7 +2,7 @@
   (:require [pixel-ships.bollinger :as bollinger :refer [color-scheme]]
             [play-clj.core :refer [color key-pressed?]]))
 
-(def debug true)
+(def debug false)
 
 (def ^:const s-to-w-divider 50.0)
 (defn screen-to-world [x]
@@ -57,8 +57,22 @@
                           [(color 1.0 0.75 0 1) [0 4 2 2]];yellow-orange
                           [(color :yellow) [0 2 2 2]]
                           [(color :white) [0 0 2 2]]])
+(def ^:const rocket-width (screen-to-world 3))
+(def ^:const rocket-height (screen-to-world 4))
+(def ^:const rocket-speed (screen-to-world 180))
+(def ^:const rocket-half-width (/ gatling-shell-width 2))
+(def ^:const rocket-half-height (/ gatling-shell-height 2))
+(def ^:const rocket-hitbox-x gatling-shell-half-width)
+(def ^:const rocket-hitbox-y (/ (+ gatling-shell-height gatling-shell-half-height) 2))
+(def ^:const rocket-hitbox-side (screen-to-world 1))
+(def ^:const rocket-xoffset-left (- ship-option-xoffset-left 2))
+(def ^:const rocket-xoffset-right (- rocket-xoffset-left 3))
+(def rocket-rects [[(color :red) [1 2 1 2 0 3 3 1]]
+                   [(color :white) [1 0 1 2]]])
+
 (def ^:const refresh-cannon 0.2)
-(def ^:const refresh-gatling 0.1)
+(def ^:const refresh-gatling 0.08)
+(def ^:const refresh-rocket 0.6)
 
 (def ^:const oob-padding (screen-to-world 30))
 (def ^:const oob-x-length (+ game-width-adj (* 2 oob-padding)))

@@ -19,7 +19,7 @@
                     (:bullet? entity) (bullet/handle-bullet screen entity)
                     :else entity)))))
 
-(defn check-for-input [screen entities]
+(defn check-for-input [{:keys [game-state option-type] :as screen} entities]
   (case (:game-state screen)
     :in-game
     (cond
@@ -34,7 +34,8 @@
           (concat entities (list (bullet/fire-cannon! screen x y a))))
         entities)
       (and (get screen :fire-gatling-when-ready true)
-           (c/cannon-key-pressed?)) ;(key-pressed? :x))
+           (c/cannon-key-pressed?) ;(key-pressed? :x))
+           (= option-type :gatling))
       (if-let [gunship (first (filter #(:gunship? %) entities))]
         (let [x (:x gunship)
               y (:y gunship)
@@ -42,6 +43,17 @@
           (update! screen :fire-gatling-when-ready false)
           (add-timer! screen :refresh-gatling-shot c/refresh-gatling)
           (concat entities (bullet/fire-gatling! screen x y a)))
+        entities)
+      (and (get screen :fire-rocket-when-ready true)
+           (c/cannon-key-pressed?) ;(key-pressed? :x))
+           (= option-type :rocket))
+      (if-let [gunship (first (filter #(:gunship? %) entities))]
+        (let [x (:x gunship)
+              y (:y gunship)
+              a (:angle gunship)]
+          (update! screen :fire-rocket-when-ready false)
+          (add-timer! screen :refresh-rocket-shot c/refresh-rocket)
+          (concat entities (bullet/fire-rocket! screen x y a)))
         entities)
       :else entities)
     entities))
@@ -78,7 +90,10 @@
                           :world (box-2d 0 0);-2.0)
                           :game-state :attract-mode
                           :ticks 0
+                          :option-type :gatling
                           :fire-cannon-when-ready true
+                          :fire-gatling-when-ready true
+                          :fire-rocket-when-ready true
                           :debug-renderer (Box2DDebugRenderer.))
           top-oob (doto
                     (create-oob-entity! screen c/oob-x-length c/oob-padding)
@@ -129,11 +144,15 @@
                entities))))
 
   :on-key-up
-  (fn [screen entities]
+  (fn [{:keys [option-type key] :as screen} entities]
     (case (:game-state screen)
       :attract-mode
       (cond (= (:key screen) (key-code :num-1))
-            (on-new-game screen entities))
+            (on-new-game screen entities)
+            (= (:key screen) (key-code :o))
+            (do
+              (update! screen :option-type (if (= option-type :gatling) :rocket :gatling))
+              entities))
       :in-game
       (cond (= (:key screen) (key-code :p))
             (do
@@ -143,6 +162,7 @@
             (do
               (update! screen :fire-cannon-when-ready true)
               (update! screen :fire-gatling-when-ready true)
+              ;(update! screen :fire-rocket-when-ready true)
               entities))
       :paused
       (cond (= (:key screen) (key-code :p))
@@ -159,7 +179,10 @@
                              entities)
       :refresh-gatling-shot (do
                               (update! screen :fire-gatling-when-ready true)
-                              entities)))
+                              entities)
+      :refresh-rocket-shot (do
+                             (update! screen :fire-rocket-when-ready true)
+                             entities)))
 
   :on-begin-contact
   (fn [screen entities]
