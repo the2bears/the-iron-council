@@ -44,8 +44,8 @@
       (pixmap! :fill-rectangle x y p-per-r p-per-r))))
 
 (defn- create-pixel-map-list
-  ([seed c-model]
-   (let [ship-map (psc/color-pixel-ship (psc/create-pixel-ship (assoc c/gunship-model :seed seed)) c-model)
+  ([seed s-model c-scheme]
+   (let [ship-map (psc/color-pixel-ship (psc/create-pixel-ship (assoc s-model :seed seed)) c-scheme)
          tags (keys (:pixels ship-map))
          pixels (:pixels ship-map)
          shape-builder (fn[s] (reduce (fn[acc n] (conj acc n)) [] s))]
@@ -55,12 +55,19 @@
   ([]
    (create-pixel-ship-texture (rand-int Integer/MAX_VALUE)))
   ([seed]
-   (create-pixel-ship-texture seed bollinger/color-scheme))
-  ([seed c-scheme]
-   (let [pixel-map-list (create-pixel-map-list seed c-scheme)
+   (create-pixel-ship-texture seed bollinger/model bollinger/color-scheme))
+  ([seed s-model c-scheme]
+   (let [pixel-map-list (create-pixel-map-list seed s-model c-scheme)
          pix-map (pixmap* 16 32 (pixmap-format :r-g-b-a8888))]
      (doseq [pixel pixel-map-list] (draw-rect-pixelmap pix-map pixel))
      (assoc (texture pix-map) :seed seed))))
+
+(defn create-option-texture
+  [seed s-model c-scheme]
+  (let [pixel-map-list (create-pixel-map-list seed s-model c-scheme)
+        pix-map (pixmap* 8 16 (pixmap-format :r-g-b-a8888))]
+    (doseq [pixel pixel-map-list] (draw-rect-pixelmap pix-map pixel))
+    (assoc (texture pix-map) :seed seed)))
 
 (defn- create-ship-body!
   [screen]
@@ -74,18 +81,30 @@
 
 (defn create-ship-entity!
   ([screen]
-   (let [pixel-ship (bundle (create-pixel-ship-texture Long/MAX_VALUE c/gunship-color-scheme))]
-     (doto (assoc pixel-ship
+   (let [pixel-ship (-> (create-pixel-ship-texture Long/MAX_VALUE c/gunship-model c/gunship-color-scheme)
+                        (assoc :translate-x (- (c/screen-to-world c/ship-mp-xoffset))
+                               :translate-y (- (c/screen-to-world c/ship-mp-yoffset))
+                               :width (c/screen-to-world 16)
+                               :height (c/screen-to-world 32)))
+         left-option (-> (create-option-texture Long/MAX_VALUE c/gatling-model c/gunship-color-scheme)
+                         (assoc :translate-x (- (c/screen-to-world c/ship-option-xoffset-left))
+                                :translate-y (- (c/screen-to-world c/ship-option-yoffset))
+                                :width (c/screen-to-world 8)
+                                :height (c/screen-to-world 16)))
+         right-option (-> (create-option-texture Long/MAX_VALUE c/gatling-model c/gunship-color-scheme)
+                          (assoc :translate-x (+ (c/screen-to-world c/ship-option-xoffset-right))
+                                 :translate-y (- (c/screen-to-world c/ship-option-yoffset))
+                                 :width (c/screen-to-world 8)
+                                 :height (c/screen-to-world 16)))
+         ship-bundle (bundle pixel-ship left-option right-option)]
+     (doto (assoc ship-bundle
              :body (create-ship-body! screen)
-             :width (c/screen-to-world 16) :height (c/screen-to-world 32)
              :id :gunship
              :gunship? true
              :render-layer 90
              :x (c/screen-to-world (/ c/game-width 2))
              :y c/ship-y-start
-             :angle 0
-             :translate-x (- (c/screen-to-world c/ship-mp-xoffset))
-             :translate-y (- (c/screen-to-world c/ship-mp-yoffset)))
+             :angle 0)
        (body-position! (c/screen-to-world (/ c/game-width 2)) c/ship-y-start 0)
        (body! :set-linear-velocity 0 0)))))
 

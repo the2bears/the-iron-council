@@ -18,6 +18,11 @@
 (def ^:const ship-y-start (screen-to-world (/ game-height 10)))
 (def ^:const ship-mp-xoffset 6)
 (def ^:const ship-mp-yoffset 26)
+(def ^:const ship-option-width 6)
+(def ^:const ship-option-buffer 1)
+(def ^:const ship-option-yoffset 14)
+(def ^:const ship-option-xoffset-left (+ ship-option-width ship-mp-xoffset ship-option-buffer))
+(def ^:const ship-option-xoffset-right (+ ship-mp-xoffset ship-option-buffer))
 
 (def ^:const gunship-speed (screen-to-world 1.5))
 (def ^:const gunship-xy-speed (Math/sqrt (/ (* gunship-speed gunship-speed) 2)))
