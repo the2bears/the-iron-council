@@ -4,7 +4,7 @@
 
 Click on the image to see the latest video.
 
-[![Recent Video](http://img.youtube.com/vi/6bSdbxNt5Oo/3.jpg)](http://www.youtube.com/watch?v=6bSdbxNt5Oo)
+[![Recent Video](http://img.youtube.com/vi/4fPtgft0VrA/3.jpg)](http://www.youtube.com/watch?v=4fPtgft0VrA)
 
 ## Features
 
