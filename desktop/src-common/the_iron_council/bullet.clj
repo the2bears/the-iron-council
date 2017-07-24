@@ -5,7 +5,8 @@
             [play-clj.math :refer [vector-2]]
             [the-iron-council.common :as c]))
 
-(def bullet-texture (atom nil))
+(def cannon-shell-texture (atom nil))
+(def gatling-shell-texture (atom nil))
 
 (defn uuid [] (str (java.util.UUID/randomUUID)))
 
@@ -14,14 +15,14 @@
     (pixmap! :set-color c)
     (pixmap! :fill-rectangle x y w h)))
 
-(defn- create-bullet-texture []
+(defn- create-cannon-shell-texture []
   (let [pix-map (pixmap* 8 16 (pixmap-format :r-g-b-a8888))]
     (doseq [color-set c/bullet-rects]
       (doseq [[x y w h] (partition 4 (second color-set))]
         (draw-rects pix-map (first color-set) x y w h)))
     (texture pix-map :set-region 0 0 6 14)))
 
-(defn create-bullet-body!
+(defn create-cannon-shell-body!
   [screen x y a bullet-start-offset-vector]
   (let [body (add-body! screen (body-def :dynamic
                                          :bullet true))
@@ -37,25 +38,85 @@
       (body! :set-linear-velocity (core/x bullet-vector) (core/y bullet-vector)))
     body))
 
-(defn create-bullet!
+(defn fire-cannon!
   [screen x y a]
   (let [bullet-start-offset-vector (vector-2 c/bullet-half-width c/bullet-half-height :rotate a)
-        bullet (cond (nil? @bullet-texture)
-                     (do
-                       (reset! bullet-texture (create-bullet-texture))
-                       @bullet-texture)
-                     :else @bullet-texture)]
+        cannon-shell (cond (nil? @cannon-shell-texture)
+                       (do
+                         (reset! cannon-shell-texture (create-cannon-shell-texture))
+                         @cannon-shell-texture)
+                      :else @cannon-shell-texture)]
                                         ;(sounds/play-once :bullet)
-    (assoc bullet
+    (assoc cannon-shell
       :id (uuid)
       :bullet? true
       :render-layer 50
       :ttl 120
-      :body (create-bullet-body! screen x y a bullet-start-offset-vector)
+      :body (create-cannon-shell-body! screen x y a bullet-start-offset-vector)
       :x (- x (core/x bullet-start-offset-vector))
       :y (- y (core/y bullet-start-offset-vector))
       :angle a
       :width c/bullet-width :height c/bullet-height)))
+
+(defn- create-gatling-shell-texture []
+  (let [pix-map (pixmap* 2 8 (pixmap-format :r-g-b-a8888))]
+    (doseq [color-set c/gatling-shell-rects]
+      (doseq [[x y w h] (partition 4 (second color-set))]
+        (draw-rects pix-map (first color-set) x y w h)))
+    (texture pix-map :set-region 0 0 2 8)))
+
+(defn create-gatling-shell-body!
+  [screen x y a gatling-start-offset-vector]
+  (let [body (add-body! screen (body-def :dynamic
+                                         :bullet true))
+        bullet-vector (vector-2 0 c/gatling-shell-speed :rotate a)]
+    (->> (polygon-shape :set-as-box c/gatling-hitbox-side c/gatling-hitbox-side (vector-2 c/gatling-hitbox-x c/gatling-hitbox-y) a)
+         (fixture-def :density 0 :friction 0 :restitution 0 :is-sensor true :shape)
+         (body! body :create-fixture))
+    (doto body
+      (body-position!
+       (- x (core/x gatling-start-offset-vector))
+       (- y (core/y gatling-start-offset-vector))
+       a)
+      (body! :set-linear-velocity (core/x bullet-vector) (core/y bullet-vector)))
+    body))
+
+(defn fire-gatling!
+  [screen x y a]
+  (let [gatling-start-offset-vector-left (vector-2 (c/screen-to-world c/gatling-shell-xoffset-left) c/gatling-shell-half-height :rotate a)
+        gatling-start-offset-vector-right (vector-2 (c/screen-to-world (- c/gatling-shell-xoffset-right)) c/gatling-shell-half-height :rotate a)
+        gatling-shell-left (cond (nil? @gatling-shell-texture)
+                             (do
+                               (reset! gatling-shell-texture (create-gatling-shell-texture)); (texture "bullet.png" :set-region 0 0 2 4));(create-gatling-shell-texture))
+                               @gatling-shell-texture)
+                             :else @gatling-shell-texture)
+        gatling-shell-right (cond (nil? @gatling-shell-texture)
+                              (do
+                                (reset! gatling-shell-texture (create-gatling-shell-texture)); (texture "bullet.png" :set-region 0 0 2 4));(create-gatling-shell-texture))
+                                @gatling-shell-texture)
+                              :else @gatling-shell-texture)]
+                                        ;(sounds/play-once :bullet)
+    [(assoc gatling-shell-left
+       :id (uuid)
+       :bullet? true
+       :render-layer 50
+       :ttl 100
+       :body (create-gatling-shell-body! screen x y a gatling-start-offset-vector-left)
+       :x (- x (core/x gatling-start-offset-vector-left))
+       :y (- y (core/y gatling-start-offset-vector-left))
+       :angle a
+       :width c/gatling-shell-width :height c/gatling-shell-height)
+     (assoc gatling-shell-right
+       :id (uuid)
+       :bullet? true
+       :render-layer 50
+       :ttl 100
+       :body (create-gatling-shell-body! screen x y a gatling-start-offset-vector-right)
+       :x (- x (core/x gatling-start-offset-vector-right))
+       :y (- y (core/y gatling-start-offset-vector-right))
+       :angle a
+       :width c/gatling-shell-width :height c/gatling-shell-height)]))
+
 
 (defn handle-collision [bullet other-entity screen entities]
   (cond ;(:oob? other-entity)

@@ -23,15 +23,25 @@
   (case (:game-state screen)
     :in-game
     (cond
-      (and (get screen :fire-when-ready true)
+      (and (get screen :fire-cannon-when-ready true)
            (c/cannon-key-pressed?)) ;(key-pressed? :x))
       (if-let [gunship (first (filter #(:gunship? %) entities))]
         (let [x (:x gunship)
               y (:y gunship)
               a (:angle gunship)]
-          (update! screen :fire-when-ready false)
-          (add-timer! screen :refresh-shot 0.2)
-          (conj entities (bullet/create-bullet! screen x y a)))
+          (update! screen :fire-cannon-when-ready false)
+          (add-timer! screen :refresh-cannon-shot c/refresh-cannon)
+          (concat entities (list (bullet/fire-cannon! screen x y a))))
+        entities)
+      (and (get screen :fire-gatling-when-ready true)
+           (c/cannon-key-pressed?)) ;(key-pressed? :x))
+      (if-let [gunship (first (filter #(:gunship? %) entities))]
+        (let [x (:x gunship)
+              y (:y gunship)
+              a (:angle gunship)]
+          (update! screen :fire-gatling-when-ready false)
+          (add-timer! screen :refresh-gatling-shot c/refresh-gatling)
+          (concat entities (bullet/fire-gatling! screen x y a)))
         entities)
       :else entities)
     entities))
@@ -68,7 +78,7 @@
                           :world (box-2d 0 0);-2.0)
                           :game-state :attract-mode
                           :ticks 0
-                          :fire-when-ready true
+                          :fire-cannon-when-ready true
                           :debug-renderer (Box2DDebugRenderer.))
           top-oob (doto
                     (create-oob-entity! screen c/oob-x-length c/oob-padding)
@@ -128,6 +138,11 @@
       (cond (= (:key screen) (key-code :p))
             (do
               (update! screen :game-state :paused)
+              entities)
+            (= (:key screen) (key-code :x))
+            (do
+              (update! screen :fire-cannon-when-ready true)
+              (update! screen :fire-gatling-when-ready true)
               entities))
       :paused
       (cond (= (:key screen) (key-code :p))
@@ -139,9 +154,12 @@
   :on-timer
   (fn [screen entities]
     (case (:id screen)
-      :refresh-shot (do
-                      (update! screen :fire-when-ready true)
-                      entities)))
+      :refresh-cannon-shot (do
+                             (update! screen :fire-cannon-when-ready true)
+                             entities)
+      :refresh-gatling-shot (do
+                              (update! screen :fire-gatling-when-ready true)
+                              entities)))
 
   :on-begin-contact
   (fn [screen entities]

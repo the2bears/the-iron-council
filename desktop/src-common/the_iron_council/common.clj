@@ -2,7 +2,7 @@
   (:require [pixel-ships.bollinger :as bollinger :refer [color-scheme]]
             [play-clj.core :refer [color key-pressed?]]))
 
-(def debug false)
+(def debug true)
 
 (def ^:const s-to-w-divider 50.0)
 (defn screen-to-world [x]
@@ -43,6 +43,22 @@
 (def bullet-rects [[(color :orange) [2 0 2 14 1 1 4 9 0 2 6 4]]
                    [(color :yellow) [2 1 2 9]]
                    [(color :white) [1 2 4 4]]])                                        ;
+(def ^:const gatling-shell-width (screen-to-world 2))
+(def ^:const gatling-shell-height (screen-to-world 8))
+(def ^:const gatling-shell-speed (screen-to-world 360))
+(def ^:const gatling-shell-half-width (/ gatling-shell-width 2))
+(def ^:const gatling-shell-half-height (/ gatling-shell-height 2))
+(def ^:const gatling-hitbox-x gatling-shell-half-width)
+(def ^:const gatling-hitbox-y (/ (+ gatling-shell-height gatling-shell-half-height) 2))
+(def ^:const gatling-hitbox-side (screen-to-world 1))
+(def ^:const gatling-shell-xoffset-left (- ship-option-xoffset-left 2))
+(def ^:const gatling-shell-xoffset-right (- gatling-shell-xoffset-left 2))
+(def gatling-shell-rects [[(color :orange) [0 6 2 2]]
+                          [(color 1.0 0.75 0 1) [0 4 2 2]];yellow-orange
+                          [(color :yellow) [0 2 2 2]]
+                          [(color :white) [0 0 2 2]]])
+(def ^:const refresh-cannon 0.2)
+(def ^:const refresh-gatling 0.1)
 
 (def ^:const oob-padding (screen-to-world 30))
 (def ^:const oob-x-length (+ game-width-adj (* 2 oob-padding)))
