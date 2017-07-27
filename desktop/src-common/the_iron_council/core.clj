@@ -3,6 +3,7 @@
             [play-clj.g2d-physics :refer [add-body! body! body-def body-position! box-2d chain-shape first-entity fixture-def second-entity step!]]
             [the-iron-council.bullet :as bullet]
             [the-iron-council.common :as c]
+            [the-iron-council.enemy :as e]
             [the-iron-council.gunship :refer :all :as gs])
   (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]))
 
@@ -95,6 +96,7 @@
                           :fire-gatling-when-ready true
                           :fire-rocket-when-ready true
                           :debug-renderer (Box2DDebugRenderer.))
+          enemy (e/create-enemy! screen (/ c/game-width-adj 2) (* 3 (/ c/game-height-adj 4)) 0) 
           top-oob (doto
                     (create-oob-entity! screen c/oob-x-length c/oob-padding)
                     (body-position! (- c/oob-padding) (+ c/game-height-adj c/oob-padding) 0))
@@ -110,7 +112,8 @@
       [(assoc top-oob :id :top-oob :oob? true :render-layer 0)
        (assoc bottom-oob :id :bottom-oob :oob? true :render-layer 0)
        (assoc left-oob :id :left-oob :oob? true :render-layer 0)
-       (assoc right-oob :id :right-oob :oob? true :render-layer 0)]))
+       (assoc right-oob :id :right-oob :oob? true :render-layer 0)
+       enemy]))
   
   :on-render
   (fn [screen entities]
@@ -128,7 +131,7 @@
                          (step! screen)
                          (check-for-input screen)
                          (handle-all-entities screen)
-                         (sort-by :render-layer)
+;                         (sort-by :render-layer)
                          (render! screen))]
 
                 (if c/debug

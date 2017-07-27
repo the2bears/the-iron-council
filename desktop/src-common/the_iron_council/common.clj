@@ -2,7 +2,7 @@
   (:require [pixel-ships.bollinger :as bollinger :refer [color-scheme]]
             [play-clj.core :refer [color key-pressed?]]))
 
-(def debug false)
+(def debug true)
 
 (def ^:const s-to-w-divider 50.0)
 (defn screen-to-world [x]

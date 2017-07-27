@@ -180,8 +180,8 @@
 
 (defn handle-collision [bullet other-entity screen entities]
   (cond ;(:oob? other-entity)
-        ;(remove #(= (:id bullet) (:id %)) entities)
-        :else entities))
+    (:enemy? other-entity) (remove #(= (:id bullet) (:id %)) entities)
+    :else entities))
 
 (defn handle-bullet [screen {:keys [ttl] :as bullet}]
   (when (> ttl 0)
