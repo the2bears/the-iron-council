@@ -3,7 +3,8 @@
             [play-clj.g2d-physics :refer [add-body! body! body-def body-position! box-2d chain-shape first-entity fixture-def second-entity step!]]
             [the-iron-council.bullet :as bullet]
             [the-iron-council.common :as c]
-            [the-iron-council.gunship :refer :all :as gs])
+            [the-iron-council.gunship :refer :all :as gs]
+            [the-iron-council.particle :as particle])
   (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]))
 
 (defn on-new-game [screen entities]
@@ -17,7 +18,16 @@
        (map (fn [entity]
               (cond (:gunship? entity) (gs/move-player-tick screen entities entity)
                     (:bullet? entity) (bullet/handle-bullet screen entity)
+                    (:shell-casing? entity) (particle/update-shell-casing screen entity)
                     :else entity)))))
+
+(defn handle-contacts [{:keys [unhandled-contacts] :as screen} entities]
+  (let [red-fn (fn [ents {:keys [e1 e2 contact-fn]}]
+                 (contact-fn e1 e2 screen ents))]
+    (when (> (count unhandled-contacts) 0) (prn :contacts-not-empty))
+    (let [result (reduce #(red-fn %1 %2) entities unhandled-contacts)]
+      (update! screen :unhandled-contacts [])
+      result)))
 
 (defn check-for-input [{:keys [game-state option-type] :as screen} entities]
   (case (:game-state screen)
@@ -128,6 +138,7 @@
                          (step! screen)
                          (check-for-input screen)
                          (handle-all-entities screen)
+                         (handle-contacts screen)
                          (sort-by :render-layer)
                          (render! screen))]
 
@@ -185,12 +196,18 @@
                              entities)))
 
   :on-begin-contact
-  (fn [screen entities]
+  (fn [{:keys [unhandled-contacts] :as screen} entities]
     (let [entity (first-entity screen entities)
           entity2 (second-entity screen entities)]
       ;(prn :entity (:id entity) :entity2 (:id entity2))
       (cond
-        (:bullet? entity2) (bullet/handle-collision entity2 entity screen entities)))))
+        (:bullet? entity2)
+        (let [updated-contacts (conj unhandled-contacts {:e1 entity2 :e2 entity :contact-fn bullet/handle-collision})]
+          (prn :adding-bullet-contact updated-contacts)
+          (update! screen :unhandled-contacts updated-contacts)
+          entities)
+            ;(bullet/handle-collision entity2 entity screen entities))
+        :else entities))))
 
 (defgame the-iron-council-game
   :on-create

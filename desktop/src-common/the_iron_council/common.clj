@@ -43,6 +43,7 @@
 (def bullet-rects [[(color :orange) [2 0 2 14 1 1 4 9 0 2 6 4]]
                    [(color :yellow) [2 1 2 9]]
                    [(color :white) [1 2 4 4]]])                                        ;
+
 (def ^:const gatling-shell-width (screen-to-world 2))
 (def ^:const gatling-shell-height (screen-to-world 8))
 (def ^:const gatling-shell-speed (screen-to-world 360))
@@ -57,6 +58,10 @@
                           [(color 1.0 0.75 0 1) [0 4 2 2]];yellow-orange
                           [(color :yellow) [0 2 2 2]]
                           [(color :white) [0 0 2 2]]])
+(def  gatling-shell-casing-color (color 0.71 0.651 0.259 1.0))
+(def ^:const gatling-shell-casing-xoffset-left (+ (screen-to-world 1) gatling-shell-xoffset-left))
+(def ^:const gatling-shell-casing-xoffset-right (+ (screen-to-world 1) gatling-shell-xoffset-right))
+
 (def ^:const rocket-width (screen-to-world 3))
 (def ^:const rocket-height (screen-to-world 4))
 (def ^:const rocket-speed (screen-to-world 180))

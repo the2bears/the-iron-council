@@ -3,7 +3,8 @@
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer [add-body! body! body-def body-position! fixture! fixture-def polygon-shape]]
             [play-clj.math :refer [vector-2]]
-            [the-iron-council.common :as c]))
+            [the-iron-council.common :as c]
+            [the-iron-council.particle :as particle]))
 
 (def cannon-shell-texture (atom nil))
 (def gatling-shell-texture (atom nil))
@@ -97,7 +98,12 @@
                                 @gatling-shell-texture)
                               :else @gatling-shell-texture)]
                                         ;(sounds/play-once :bullet)
-    [(assoc gatling-shell-left
+
+        ;shell-casing-left  (particle/create-shell-casing (+ (c/screen-to-world 1) (- x (core/x gatling-start-offset-vector-left))) (- y (core/y gatling-start-offset-vector-left)) a)
+        ;shell-casing-right  (particle/create-shell-casing (+ (c/screen-to-world 1) (- x (core/x gatling-start-offset-vector-right))) (- y (core/y gatling-start-offset-vector-right)) a)]
+    [;shell-casing-left
+     ;shell-casing-right
+     (assoc gatling-shell-left
        :id (uuid)
        :bullet? true
        :render-layer 50
@@ -179,6 +185,7 @@
 
 
 (defn handle-collision [bullet other-entity screen entities]
+  (prn :bullet-handle-collision)
   (cond ;(:oob? other-entity)
         ;(remove #(= (:id bullet) (:id %)) entities)
         :else entities))
