@@ -3,7 +3,8 @@
             [play-clj.g2d-physics :refer [add-body! body! body-def body-position! box-2d chain-shape first-entity fixture-def second-entity step!]]
             [the-iron-council.bullet :as bullet]
             [the-iron-council.common :as c]
-            [the-iron-council.gunship :refer :all :as gs])
+            [the-iron-council.gunship :refer :all :as gs]
+            [the-iron-council.track :refer [create-track-entity] :as tr])
   (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]))
 
 (defn on-new-game [screen entities]
@@ -17,6 +18,7 @@
        (map (fn [entity]
               (cond (:gunship? entity) (gs/move-player-tick screen entities entity)
                     (:bullet? entity) (bullet/handle-bullet screen entity)
+                    (:track? entity) (tr/update-track screen entity)
                     :else entity)))))
 
 (defn check-for-input [{:keys [game-state option-type] :as screen} entities]
@@ -106,12 +108,15 @@
                       (body-position! (- (* 2 c/oob-padding)) (- c/oob-padding) 0))
           right-oob (doto
                        (create-oob-entity! screen c/oob-padding c/oob-y-length)
-                       (body-position! (+ c/game-width-adj c/oob-padding) (- c/oob-padding) 0))]
+                      (body-position! (+ c/game-width-adj c/oob-padding) (- c/oob-padding) 0))
+          track-piece [(tr/create-track-entity (/ c/game-width-adj 2) (/ c/game-height-adj 2) 0)
+                       (tr/create-track-entity (/ c/game-width-adj 2) (+ (c/screen-to-world 12) (/ c/game-height-adj 2)) 0)]]
       [(assoc top-oob :id :top-oob :oob? true :render-layer 0)
        (assoc bottom-oob :id :bottom-oob :oob? true :render-layer 0)
        (assoc left-oob :id :left-oob :oob? true :render-layer 0)
-       (assoc right-oob :id :right-oob :oob? true :render-layer 0)]))
-  
+       (assoc right-oob :id :right-oob :oob? true :render-layer 0)
+       (first track-piece)
+       (second track-piece)]))
   :on-render
   (fn [screen entities]
     (let [debug-renderer (:debug-renderer screen)
