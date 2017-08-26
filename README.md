@@ -2,9 +2,9 @@
 
 *The Iron Council* - A Lone Gunship Aginst the Enemy
 
-Click on the image to see the latest video.
+Click on the image to see the latest video showing a basic track rendering.
 
-[![Recent Video](http://img.youtube.com/vi/4fPtgft0VrA/3.jpg)](http://www.youtube.com/watch?v=4fPtgft0VrA)
+[![Recent Video](https://img.youtube.com/vi/OOoDOoOgGns/hqdefault.jpg)](https://www.youtube.com/watch?v=OOoDOoOgGns)
 
 ## Features
 
