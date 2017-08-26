@@ -1,15 +1,17 @@
 (ns the-iron-council.track
-  (:require [play-clj.core :refer [color pixmap! pixmap* pixmap-format shape x y] :as core]
+  (:require [play-clj.core :refer [color pixmap! pixmap* pixmap-format shape update! x y] :as core]
             [play-clj.g2d :refer [texture]]
             [play-clj.math :refer [vector-2 vector-2!]]
             [the-iron-council.common :as c]))
 
 (def track-texture (atom nil))
-(def track-speed (c/screen-to-world -0.6))
+(def track-speed -1)
+(def track-speed-adj (c/screen-to-world track-speed))
 (def track-width 32)
 (def track-height 4)
 (def track-tie-color (color 0.14 0.12 0.11 1))
 (def track-rail-color (color 0.42 0.44 0.47 1))
+(def track-lower-limit (c/screen-to-world -20))
 
 (defn- draw-rects [pix-map c x y w h]
   (doto pix-map
@@ -63,9 +65,13 @@
            :translate-y (c/screen-to-world (- (/ track-height 2)))
            :track? true :id :track
            :render-layer 1
-           :speed track-speed)))
+           :speed track-speed-adj)))
 
-(defn create-curved-track []
+(defn- track-within-limit
+  [limit {:keys [y] :as track-piece}]
+  (< (+ y limit) (+ c/game-height 20)))
+
+(defn create-curved-track [screen]
   (let [track (-> (create-track-sequence (/ c/game-width 8) 0 (vector-2 0 12) -1 30)
                   (create-track-sequence 0 5)
                   (create-track-sequence 2 30)
@@ -76,13 +82,22 @@
                   (create-track-sequence 4 10)
                   (create-track-sequence -4 10)
                   (create-track-sequence 0 100))]
-                  ;(create-track-sequence (/ c/game-width 2) 0 (vector-2 0 12) 0 25))]
-    (reduce (fn [acc t](conj acc
-                             (create-track-entity (c/screen-to-world (:x t))
-                                                  (c/screen-to-world (:y t))
-                                                  (- (:a t) 90))))
-            []
-            track))) ;(concat track-coords t-coords-s t-coords-2 snd-track))))
-(defn update-track
+    (update! screen :track track)))    
+
+(defn add-tracks [screen entities]
+  (let [limit (* (:ticks screen) track-speed)
+        new-pieces (take-while (partial track-within-limit limit) (:track screen))
+        remaining (drop-while (partial track-within-limit limit) (:track screen))
+        new-entities (reduce (fn [acc t](conj acc
+                                              (create-track-entity (c/screen-to-world (:x t))
+                                                                   (c/screen-to-world (+ (:y t) limit))
+                                                                   (- (:a t) 90))))
+                             []
+                             new-pieces)]
+    (update! screen :track remaining)
+    (concat entities new-entities)))
+
+(defn move-track
   [screen {:keys [y speed] :as entity}]
-  (assoc entity :y (+ y speed)))
+  (when (> y track-lower-limit)
+    (assoc entity :y (+ y speed))))

@@ -11,16 +11,16 @@
   (update! screen
            :game-state :in-game
            :ticks 0)
+  (tr/create-curved-track screen)
   (-> entities
-      (conj (gs/create-ship-entity! screen))
-      (conj (tr/create-curved-track))))
+      (conj (gs/create-ship-entity! screen))))
   
 (defn handle-all-entities [screen entities]
   (->> entities
        (map (fn [entity]
               (cond (:gunship? entity) (gs/move-player-tick screen entities entity)
                     (:bullet? entity) (bullet/handle-bullet screen entity)
-                    (:track? entity) (tr/update-track screen entity)
+                    (:track? entity) (tr/move-track screen entity)
                     :else entity)))))
 
 (defn check-for-input [{:keys [game-state option-type] :as screen} entities]
@@ -110,16 +110,12 @@
                       (body-position! (- (* 2 c/oob-padding)) (- c/oob-padding) 0))
           right-oob (doto
                        (create-oob-entity! screen c/oob-padding c/oob-y-length)
-                      (body-position! (+ c/game-width-adj c/oob-padding) (- c/oob-padding) 0))
-          track-piece (tr/create-curved-track)];[(tr/create-track-entity (/ c/game-width-adj 2) (/ c/game-height-adj 2) 0)
-                       ;(tr/create-track-entity (/ c/game-width-adj 2) (+ (c/screen-to-world 12) (/ c/game-height-adj 2)) 0)]
+                      (body-position! (+ c/game-width-adj c/oob-padding) (- c/oob-padding) 0))]
       [(assoc top-oob :id :top-oob :oob? true :render-layer 0)
        (assoc bottom-oob :id :bottom-oob :oob? true :render-layer 0)
        (assoc left-oob :id :left-oob :oob? true :render-layer 0)
        (assoc right-oob :id :right-oob :oob? true :render-layer 0)]))
-       ;track-piece]))
-       ;(first track-piece)
-       ;(second track-piece)]))
+
   :on-render
   (fn [screen entities]
     (let [debug-renderer (:debug-renderer screen)
@@ -136,6 +132,7 @@
                          (step! screen)
                          (check-for-input screen)
                          (handle-all-entities screen)
+                         (tr/add-tracks screen)
                          (sort-by :render-layer)
                          (render! screen))]
 
