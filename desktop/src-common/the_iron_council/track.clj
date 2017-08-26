@@ -8,7 +8,7 @@
 (def track-speed (c/screen-to-world 0));-0.05)
 (def track-width 32)
 (def track-height 4)
-(def track-tie-color (color 0.5 0.5 0.5 1))
+(def track-tie-color (color 0.14 0.12 0.11 1))
 
 (defn- draw-rects [pix-map c x y w h]
   (doto pix-map
@@ -60,14 +60,17 @@
            :speed track-speed)))
 
 (defn create-curved-track []
-  (let [track-coords (create-track-sequence (/ c/game-width 2) 0 (vector-2 0 12) -3 20)]
+  (let [track-coords (create-track-sequence (/ c/game-width 2) 0 (vector-2 0 12) -3 10)
+        t-coords-s (create-track-sequence (last track-coords) 0 5)
+        t-coords-2 (create-track-sequence (last t-coords-s) 3 10)
+        snd-track (create-track-sequence (/ c/game-width 2) 0 (vector-2 0 12) 0 25)]
+    
     (reduce (fn [acc t](conj acc
                              (create-track-entity (c/screen-to-world (:x t))
                                                   (c/screen-to-world (:y t))
                                                   (- (:a t) 90))))
             []
-            track-coords)))
-
+            (concat track-coords t-coords-s t-coords-2 snd-track))))
 (defn update-track
   [screen {:keys [y speed] :as entity}]
   (assoc entity :y (+ y speed)))
