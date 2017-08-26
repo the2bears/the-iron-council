@@ -1,11 +1,11 @@
 (ns the-iron-council.track
   (:require [play-clj.core :refer [color pixmap! pixmap* pixmap-format shape x y] :as core]
             [play-clj.g2d :refer [texture]]
-            [play-clj.math :refer [vector-2]]
+            [play-clj.math :refer [vector-2 vector-2!]]
             [the-iron-council.common :as c]))
 
 (def track-texture (atom nil))
-(def track-speed (c/screen-to-world -0.4))
+(def track-speed (c/screen-to-world 0));-0.05)
 (def track-width 32)
 (def track-height 4)
 (def track-tie-color (color 0.5 0.5 0.5 1))
@@ -15,6 +15,29 @@
     (pixmap! :set-color c)
     (pixmap! :fill-rectangle x y w h)))
 
+(defn- create-track-sequence
+  ([{:keys [x y v]} r n]
+   (create-track-sequence x y v r n))
+  ([x y v r n]
+   (loop [x x
+          y y
+          c n
+          acc []
+          v v]
+     (if (= c 0)
+       acc
+       (let [new-v (vector-2 (core/x v) (core/y v) :rotate r)
+             x (+ x (core/x new-v))
+             y (+ y (core/y new-v))]
+         (recur x
+                y
+                (dec c)
+                (conj acc {:x x
+                           :y y
+                           :a (vector-2! new-v :angle)
+                           :v new-v})
+                new-v))))))
+                     
 (defn- create-track-texture []
   (let [pix-map (pixmap* track-width track-height (pixmap-format :r-g-b-a8888))]
     (draw-rects pix-map track-tie-color 0 0 track-width track-height)
@@ -35,6 +58,15 @@
            :track? true :id :track
            :render-layer 1
            :speed track-speed)))
+
+(defn create-curved-track []
+  (let [track-coords (create-track-sequence (/ c/game-width 2) 0 (vector-2 0 12) -3 20)]
+    (reduce (fn [acc t](conj acc
+                             (create-track-entity (c/screen-to-world (:x t))
+                                                  (c/screen-to-world (:y t))
+                                                  (- (:a t) 90))))
+            []
+            track-coords)))
 
 (defn update-track
   [screen {:keys [y speed] :as entity}]
