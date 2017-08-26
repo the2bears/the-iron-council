@@ -5,7 +5,7 @@
             [the-iron-council.common :as c]))
 
 (def track-texture (atom nil))
-(def track-speed (c/screen-to-world 0));-0.05)
+(def track-speed (c/screen-to-world -0.6))
 (def track-width 32)
 (def track-height 4)
 (def track-tie-color (color 0.14 0.12 0.11 1))
@@ -66,9 +66,16 @@
            :speed track-speed)))
 
 (defn create-curved-track []
-  (let [track (-> (create-track-sequence (/ c/game-width 2) 0 (vector-2 0 12) -3 10)
+  (let [track (-> (create-track-sequence (/ c/game-width 8) 0 (vector-2 0 12) -1 30)
                   (create-track-sequence 0 5)
-                  (create-track-sequence 3 10))]
+                  (create-track-sequence 2 30)
+                  (create-track-sequence -2 20)
+                  (create-track-sequence 0 10)
+                  (create-track-sequence 1 10)
+                  (create-track-sequence 0 15)
+                  (create-track-sequence 4 10)
+                  (create-track-sequence -4 10)
+                  (create-track-sequence 0 100))]
                   ;(create-track-sequence (/ c/game-width 2) 0 (vector-2 0 12) 0 25))]
     (reduce (fn [acc t](conj acc
                              (create-track-entity (c/screen-to-world (:x t))

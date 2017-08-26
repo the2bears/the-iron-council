@@ -11,8 +11,10 @@
   (update! screen
            :game-state :in-game
            :ticks 0)
-  (conj entities (gs/create-ship-entity! screen)))
-
+  (-> entities
+      (conj (gs/create-ship-entity! screen))
+      (conj (tr/create-curved-track))))
+  
 (defn handle-all-entities [screen entities]
   (->> entities
        (map (fn [entity]
@@ -114,8 +116,8 @@
       [(assoc top-oob :id :top-oob :oob? true :render-layer 0)
        (assoc bottom-oob :id :bottom-oob :oob? true :render-layer 0)
        (assoc left-oob :id :left-oob :oob? true :render-layer 0)
-       (assoc right-oob :id :right-oob :oob? true :render-layer 0)
-       track-piece]))
+       (assoc right-oob :id :right-oob :oob? true :render-layer 0)]))
+       ;track-piece]))
        ;(first track-piece)
        ;(second track-piece)]))
   :on-render
