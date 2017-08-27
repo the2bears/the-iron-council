@@ -11,7 +11,7 @@
 (def track-height 4)
 (def track-tie-color (color 0.14 0.12 0.11 1))
 (def track-rail-color (color 0.42 0.44 0.47 1))
-(def track-lower-limit (c/screen-to-world -20))
+(def track-lower-limit (c/screen-to-world -60))
 
 (defn- draw-rects [pix-map c x y w h]
   (doto pix-map
@@ -69,7 +69,7 @@
 
 (defn- track-within-limit
   [limit {:keys [y] :as track-piece}]
-  (< (+ y limit) (+ c/game-height 20)))
+  (< (+ y limit) (+ c/game-height 60)))
 
 (defn create-curved-track [screen]
   (let [track (-> (create-track-sequence (/ c/game-width 8) 0 (vector-2 0 12) -1 30)

@@ -34,7 +34,7 @@
 
 (def ^:const bullet-width (screen-to-world 6))
 (def ^:const bullet-height (screen-to-world 14))
-(def ^:const bullet-speed (screen-to-world 300))
+(def ^:const bullet-speed (screen-to-world 5))
 (def ^:const bullet-half-width (/ bullet-width 2))
 (def ^:const bullet-half-height (/ bullet-height 2))
 (def ^:const bullet-hitbox-x bullet-half-width)
@@ -45,7 +45,7 @@
                    [(color :white) [1 2 4 4]]])                                        ;
 (def ^:const gatling-shell-width (screen-to-world 2))
 (def ^:const gatling-shell-height (screen-to-world 8))
-(def ^:const gatling-shell-speed (screen-to-world 360))
+(def ^:const gatling-shell-speed (screen-to-world 6))
 (def ^:const gatling-shell-half-width (/ gatling-shell-width 2))
 (def ^:const gatling-shell-half-height (/ gatling-shell-height 2))
 (def ^:const gatling-hitbox-x gatling-shell-half-width)
@@ -59,7 +59,7 @@
                           [(color :white) [0 0 2 2]]])
 (def ^:const rocket-width (screen-to-world 3))
 (def ^:const rocket-height (screen-to-world 4))
-(def ^:const rocket-speed (screen-to-world 180))
+(def ^:const rocket-speed (screen-to-world 3))
 (def ^:const rocket-half-width (/ gatling-shell-width 2))
 (def ^:const rocket-half-height (/ gatling-shell-height 2))
 (def ^:const rocket-hitbox-x gatling-shell-half-width)

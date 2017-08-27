@@ -19,7 +19,7 @@
   (->> entities
        (map (fn [entity]
               (cond (:gunship? entity) (gs/move-player-tick screen entities entity)
-                    (:bullet? entity) (bullet/handle-bullet screen entity)
+                    (:bullet? entity) (bullet/move-bullet screen entity)
                     (:track? entity) (tr/move-track screen entity)
                     :else entity)))))
 
@@ -126,6 +126,7 @@
       (clear! 0.1 0.1 0.12 1)
       (cond (not= :paused game-state)
             (do
+              ;(Thread/sleep 100)
               (update! screen :ticks (inc (:ticks screen)))
               (let [entities
                     (->> entities
@@ -135,7 +136,8 @@
                          (tr/add-tracks screen)
                          (sort-by :render-layer)
                          (render! screen))]
-
+;                (when (= 0 (mod ticks 60))
+;                  (prn :bullet-count (count (filter :bullet? entities))) 
                 (if c/debug
                   (.render debug-renderer world (.combined camera)))
                 entities))
