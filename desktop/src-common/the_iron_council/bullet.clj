@@ -1,7 +1,7 @@
 (ns the-iron-council.bullet
   (:require [play-clj.core :refer [color pixmap! pixmap* pixmap-format shape x y] :as core]
             [play-clj.g2d :refer [texture]]
-            [play-clj.math :refer [vector-2]]
+            [play-clj.math :refer [circle circle! vector-2]]
             [the-iron-council.common :as c]))
 
 (def cannon-shell-texture (atom nil))
@@ -30,17 +30,20 @@
                        (do
                          (reset! cannon-shell-texture (create-cannon-shell-texture))
                          @cannon-shell-texture)
-                      :else @cannon-shell-texture)]
+                       :else @cannon-shell-texture)
+        x (- x (core/x bullet-start-offset-vector))
+        y (- y (core/y bullet-start-offset-vector))]
                                         ;(sounds/play-once :bullet)
     (assoc cannon-shell
       :id (uuid)
       :bullet? true
       :render-layer 50
       :ttl 120
-      :x (- x (core/x bullet-start-offset-vector))
-      :y (- y (core/y bullet-start-offset-vector))
+      :x x
+      :y y
       :angle a
       :velocity cannon-velocity-vector
+      :collider (circle x y c/bullet-hitbox-x)
       :width c/bullet-width :height c/bullet-height)))
 
 (defn- create-gatling-shell-texture []
@@ -64,27 +67,33 @@
                               (do
                                 (reset! gatling-shell-texture (create-gatling-shell-texture))
                                 @gatling-shell-texture)
-                              :else @gatling-shell-texture)]
+                              :else @gatling-shell-texture)
+        x-l (- x (core/x gatling-start-offset-vector-left))
+        y-l (- y (core/y gatling-start-offset-vector-left))
+        x-r (- x (core/x gatling-start-offset-vector-right))
+        y-r (- y (core/y gatling-start-offset-vector-right))]
                                         ;(sounds/play-once :bullet)
     [(assoc gatling-shell-left
        :id (uuid)
        :bullet? true
        :render-layer 50
        :ttl 100
-       :x (- x (core/x gatling-start-offset-vector-left))
-       :y (- y (core/y gatling-start-offset-vector-left))
+       :x x-l
+       :y y-l
        :angle a
        :velocity gatling-velocity-vector
+       :collider (circle x-l y-l c/gatling-hitbox-x)
        :width c/gatling-shell-width :height c/gatling-shell-height)
      (assoc gatling-shell-right
        :id (uuid)
        :bullet? true
        :render-layer 50
        :ttl 100
-       :x (- x (core/x gatling-start-offset-vector-right))
-       :y (- y (core/y gatling-start-offset-vector-right))
+       :x x-r
+       :y y-r
        :angle a
        :velocity gatling-velocity-vector
+       :collider (circle x-r y-r c/gatling-hitbox-x)
        :width c/gatling-shell-width :height c/gatling-shell-height)]))
 
 (defn- create-rocket-texture []
@@ -108,29 +117,33 @@
                        (do
                          (reset! rocket-texture (create-rocket-texture))
                          @rocket-texture)
-                       :else @rocket-texture)]
+                       :else @rocket-texture)
+        x-l (- x (core/x rocket-start-offset-vector-left))
+        y-l (- y (core/y rocket-start-offset-vector-left))
+        x-r (- x (core/x rocket-start-offset-vector-right))
+        y-r (- y (core/y rocket-start-offset-vector-right))]
                                         ;(sounds/play-once :bullet)
     [(assoc rocket-left
        :id (uuid)
        :bullet? true
        :render-layer 50
        :ttl 200
-       ;:body (create-rocket-body! screen x y a rocket-start-offset-vector-left)
-       :x (- x (core/x rocket-start-offset-vector-left))
-       :y (- y (core/y rocket-start-offset-vector-left))
+       :x x-l
+       :y y-l
        :angle a
        :velocity rocket-velocity-vector
+       :collider (circle x-l y-l c/rocket-hitbox-x)
        :width c/rocket-width :height c/rocket-height)
      (assoc rocket-right
        :id (uuid)
        :bullet? true
        :render-layer 50
        :ttl 200
-       ;:body (create-rocket-body! screen x y a rocket-start-offset-vector-right)
-       :x (- x (core/x rocket-start-offset-vector-right))
-       :y (- y (core/y rocket-start-offset-vector-right))
+       :x x-r
+       :y y-r
        :angle a
        :velocity rocket-velocity-vector
+       :collider (circle x-r y-r c/rocket-hitbox-x)
        :width c/rocket-width :height c/rocket-height)]))
 
 
@@ -139,8 +152,10 @@
         ;(remove #(= (:id bullet) (:id %)) entities)
         :else entities))
 
-(defn move-bullet [screen {:keys [ttl x y velocity] :as bullet}]
+(defn move-bullet [screen {:keys [ttl x y velocity collider] :as bullet}]
   (let [dx (core/x velocity)
         dy (core/y velocity)]
     (when (> ttl 0)
-      (assoc bullet :ttl (dec ttl) :x (+ x dx) :y (+ y dy)))))
+      (do
+        (circle! collider :set-position (+ x dx) (+ y dy))
+        (assoc bullet :ttl (dec ttl) :x (+ x dx) :y (+ y dy))))))

@@ -194,10 +194,10 @@
   :on-begin-contact
   (fn [screen entities]
     (let [entity (first-entity screen entities)
-          entity2 (second-entity screen entities)]
+          entity2 (second-entity screen entities)])))
       ;(prn :entity (:id entity) :entity2 (:id entity2))
-      (cond
-        (:bullet? entity2) (bullet/handle-collision entity2 entity screen entities)))))
+      ;(cond
+      ;  (:bullet? entity2) (bullet/handle-collision entity2 entity screen entities))))
 
 (defgame the-iron-council-game
   :on-create
