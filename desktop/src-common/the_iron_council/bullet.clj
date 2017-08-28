@@ -1,4 +1,4 @@
-(ns the-iron-council.bullet
+ (ns the-iron-council.bullet
   (:require [play-clj.core :refer [color pixmap! pixmap* pixmap-format shape x y] :as core]
             [play-clj.g2d :refer [texture]]
             [play-clj.math :refer [circle circle! vector-2]]

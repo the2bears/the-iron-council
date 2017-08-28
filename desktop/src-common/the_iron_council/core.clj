@@ -2,7 +2,9 @@
   (:require [play-clj.core :refer :all]
             [play-clj.g2d-physics :refer [add-body! body! body-def body-position! box-2d chain-shape first-entity fixture-def second-entity step!]]
             [the-iron-council.bullet :as bullet]
+            [the-iron-council.collision :as collision]
             [the-iron-council.common :as c]
+            [the-iron-council.enemy :as enemy]
             [the-iron-council.gunship :refer :all :as gs]
             [the-iron-council.track :refer [create-curved-track create-track-entity] :as tr])
   (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]))
@@ -22,6 +24,17 @@
                     (:bullet? entity) (bullet/move-bullet screen entity)
                     (:track? entity) (tr/move-track screen entity)
                     :else entity)))))
+
+(defn handle-collisions [{:keys [collisions] :as screen} entities]
+  (let [bullet-ids (into #{} (map (comp :id first) collisions))]
+    (if (empty? bullet-ids)
+      entities
+      (do
+        ;(prn :collision-bullets bullet-ids :all-bullets (filter :bullet? entities))
+        (update! screen :collisions [])
+        (let [updated-entities (remove #(some? (bullet-ids (:id %))) entities)]
+          ;(prn :count-entities (count entities) :count-updated (count updated-entities))
+          updated-entities)))))
 
 (defn check-for-input [{:keys [game-state option-type] :as screen} entities]
   (case (:game-state screen)
@@ -110,11 +123,13 @@
                       (body-position! (- (* 2 c/oob-padding)) (- c/oob-padding) 0))
           right-oob (doto
                        (create-oob-entity! screen c/oob-padding c/oob-y-length)
-                      (body-position! (+ c/game-width-adj c/oob-padding) (- c/oob-padding) 0))]
+                      (body-position! (+ c/game-width-adj c/oob-padding) (- c/oob-padding) 0))
+          enemy (enemy/create-test-enemy)]
       [(assoc top-oob :id :top-oob :oob? true :render-layer 0)
        (assoc bottom-oob :id :bottom-oob :oob? true :render-layer 0)
        (assoc left-oob :id :left-oob :oob? true :render-layer 0)
-       (assoc right-oob :id :right-oob :oob? true :render-layer 0)]))
+       (assoc right-oob :id :right-oob :oob? true :render-layer 0)
+       enemy]))
 
   :on-render
   (fn [screen entities]
@@ -134,6 +149,8 @@
                          (check-for-input screen)
                          (handle-all-entities screen)
                          (tr/add-tracks screen)
+                         (collision/compute-collisions screen)
+                         (handle-collisions screen)
                          (sort-by :render-layer)
                          (render! screen))]
 ;                (when (= 0 (mod ticks 60))
