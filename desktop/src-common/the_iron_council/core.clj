@@ -141,16 +141,16 @@
       (clear! 0.1 0.1 0.12 1)
       (cond (not= :paused game-state)
             (do
-              ;(Thread/sleep 100)
+              ;(Thread/sleep 50)
               (update! screen :ticks (inc (:ticks screen)))
               (let [entities
                     (->> entities
                          (step! screen)
                          (check-for-input screen)
-                         (handle-all-entities screen)
+                         (handle-all-entities screen);move done here
                          (tr/add-tracks screen)
-                         (collision/compute-collisions screen)
-                         (handle-collisions screen)
+                         (collision/compute-collisions screen);collisions detected
+                         (handle-collisions screen);collisions handled
                          (sort-by :render-layer)
                          (render! screen))]
 ;                (when (= 0 (mod ticks 60))
