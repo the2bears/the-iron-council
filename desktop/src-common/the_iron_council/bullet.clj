@@ -44,6 +44,7 @@
       :angle a
       :velocity cannon-velocity-vector
       :collider (circle (+ x (c/screen-to-world 3)) (+ y (c/screen-to-world 11)) c/bullet-hitbox-x)
+      :collider' (circle (+ x (c/screen-to-world 3)) (+ y (c/screen-to-world 11)) c/bullet-hitbox-x)
       :c-x-offset (c/screen-to-world 3)
       :c-y-offset (c/screen-to-world 11)
       :width c/bullet-width :height c/bullet-height)))
@@ -85,6 +86,7 @@
        :angle a
        :velocity gatling-velocity-vector
        :collider (circle x-l y-l c/gatling-hitbox-x)
+       :collider' (circle x-l y-l c/gatling-hitbox-x)
        :c-x-offset (c/screen-to-world 1)
        :c-y-offset (c/screen-to-world 6)
        :width c/gatling-shell-width :height c/gatling-shell-height)
@@ -98,6 +100,7 @@
        :angle a
        :velocity gatling-velocity-vector
        :collider (circle x-r y-r c/gatling-hitbox-x)
+       :collider' (circle x-r y-r c/gatling-hitbox-x)
        :c-x-offset (c/screen-to-world 1)
        :c-y-offset (c/screen-to-world 6)
        :width c/gatling-shell-width :height c/gatling-shell-height)]))
@@ -139,6 +142,7 @@
        :angle a
        :velocity rocket-velocity-vector
        :collider (circle x-l y-l c/rocket-hitbox-x)
+       :collider' (circle x-l y-l c/rocket-hitbox-x)
        :c-x-offset (c/screen-to-world 1.5)
        :c-y-offset (c/screen-to-world 3)
        :width c/rocket-width :height c/rocket-height)
@@ -152,6 +156,7 @@
        :angle a
        :velocity rocket-velocity-vector
        :collider (circle x-r y-r c/rocket-hitbox-x)
+       :collider' (circle x-r y-r c/rocket-hitbox-x)
        :c-x-offset (c/screen-to-world 1.5)
        :c-y-offset (c/screen-to-world 3)
        :width c/rocket-width :height c/rocket-height)]))
@@ -162,10 +167,11 @@
         ;(remove #(= (:id bullet) (:id %)) entities)
         :else entities))
 
-(defn move-bullet [screen {:keys [ttl x y c-x-offset c-y-offset velocity collider] :as bullet}]
+(defn move-bullet [screen {:keys [ttl x y c-x-offset c-y-offset velocity collider collider'] :as bullet}]
   (let [dx (core/x velocity)
         dy (core/y velocity)]
     (when (> ttl 0)
       (do
         (circle! collider :set-position (+ x dx c-x-offset) (+ y dy c-y-offset))
+        (circle! collider' :set-position (+ x (/ dx 2) c-x-offset) (+ y (/ dy 2) c-y-offset))
         (assoc bullet :ttl (dec ttl) :x (+ x dx) :y (+ y dy))))))

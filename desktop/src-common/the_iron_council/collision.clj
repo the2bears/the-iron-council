@@ -8,7 +8,8 @@
         ;colliders (filter :collider entities)
         collisions (for [bullet bullets
                          enemy enemies
-                         :when (intersector! :overlaps (:collider bullet) (:collider enemy))]
+                         :when (or (intersector! :overlaps (:collider bullet) (:collider enemy))
+                                   (intersector! :overlaps (:collider' bullet) (:collider enemy)))]
                      [bullet enemy])]
     (when (not (empty? collisions))
       (update! screen :collisions collisions)))
