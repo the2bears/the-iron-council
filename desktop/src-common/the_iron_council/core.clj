@@ -26,7 +26,7 @@
                     :else entity)))))
 
 (defn handle-collisions [{:keys [collisions] :as screen} entities]
-  (let [bullet-ids (into #{} (map (comp :id first) collisions))]
+  (let [bullet-ids (into #{} (map (comp :id :bullet) collisions))]
     (if (empty? bullet-ids)
       entities
       (do

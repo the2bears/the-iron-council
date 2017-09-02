@@ -2,15 +2,20 @@
   (:require [play-clj.core :refer [update!]]
             [play-clj.math :refer [circle circle! intersector! polygon polygon! rectangle rectangle!]]))
 
+(defn- compute-collision [bullet enemy]
+  (cond (intersector! :overlaps (:collider' bullet) (:collider enemy))
+        {:bullet bullet :enemy enemy :at (:collider' bullet)}
+        (intersector! :overlaps (:collider bullet) (:collider enemy))
+        {:bullet bullet :enemy  enemy :at (:collider bullet)}))
+
 (defn compute-collisions [{:keys [ticks] :as screen} entities]
   (let [bullets (filter :bullet? entities)
         enemies (filter :enemy? entities)
         ;colliders (filter :collider entities)
         collisions (for [bullet bullets
-                         enemy enemies
-                         :when (or (intersector! :overlaps (:collider bullet) (:collider enemy))
-                                   (intersector! :overlaps (:collider' bullet) (:collider enemy)))]
-                     [bullet enemy])]
+                         enemy enemies]
+                      (if-some [collision (compute-collision bullet enemy)]
+                        collision))]
     (when (not (empty? collisions))
       (update! screen :collisions collisions)))
   entities)

@@ -6,7 +6,7 @@
 
 
 
-(def rec-side (c/screen-to-world 4))
+(def rec-side (c/screen-to-world 10))
 (def rec-offset (- (/ rec-side 2)))
 
 (defn create-test-enemy []
