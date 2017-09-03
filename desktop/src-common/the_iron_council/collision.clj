@@ -1,17 +1,47 @@
 (ns the-iron-council.collision
   (:require [play-clj.core :refer [update!]]
-            [play-clj.math :refer [circle circle! intersector! polygon polygon! rectangle rectangle!]]))
+            [play-clj.math :refer [circle circle! intersector! polygon polygon! rectangle rectangle! vector-2 vector-2!]]))
 
-(defn- compute-collision [bullet enemy]
-  (cond (intersector! :overlaps (:collider' bullet) (:collider enemy))
-        {:bullet bullet :enemy enemy :at (:collider' bullet)}
-        (intersector! :overlaps (:collider bullet) (:collider enemy))
-        {:bullet bullet :enemy  enemy :at (:collider bullet)}))
+(defn- overlap
+  "Tests for overlap with circle and polygon"
+  [c p]
+  (let [poly-vertices (into [] (partition 2  (into [] (polygon! p :get-vertices))))
+        poly-vertices (conj poly-vertices (first poly-vertices))
+        points-of-lines (map (fn[a b] [a b]) poly-vertices (rest poly-vertices))
+        v1 (vector-2 0 0)
+        v2 (vector-2 0 0)
+        v3 (vector-2 (.x ^com.badlogic.gdx.math.Circle c) (.y ^com.badlogic.gdx.math.Circle c))
+        radius (.radius ^com.badlogic.gdx.math.Circle c)
+        radius2 (* radius radius)
+        over-lap-line (reduce (fn[acc [[x1 y1][x2 y2]]] (or acc
+                                                            (intersector! :intersect-segment-circle
+                                                                          (vector-2! v1 :set x1 y1)
+                                                                          (vector-2! v2 :set x2 y2)
+                                                                          v3
+                                                                          radius2)))
+                              false
+                              points-of-lines)
+        overlap (or over-lap-line
+                    (polygon! p :contains v3))]
+    overlap))
+
+
+(defn- compute-collision [bullet {:keys [collider-type] :as enemy}]
+  (cond (= collider-type :poly)
+        (cond (overlap (:collider' bullet) (:collider enemy))
+              {:bullet bullet :enemy enemy :at (:collider' bullet)}
+              (overlap (:collider bullet) (:collider enemy))
+              {:bullet bullet :enemy enemy :at (:collider bullet)})
+        (= collider-type :rect)
+        (cond (intersector! :overlaps (:collider' bullet) (:collider enemy))
+              {:bullet bullet :enemy enemy :at (:collider' bullet)}
+              (intersector! :overlaps (:collider bullet) (:collider enemy))
+              {:bullet bullet :enemy  enemy :at (:collider bullet)})
+        :else false))
 
 (defn compute-collisions [{:keys [ticks] :as screen} entities]
   (let [bullets (filter :bullet? entities)
         enemies (filter :enemy? entities)
-        ;colliders (filter :collider entities)
         collisions (for [bullet bullets
                          enemy enemies]
                       (if-some [collision (compute-collision bullet enemy)]
@@ -19,30 +49,3 @@
     (when (not (empty? collisions))
       (update! screen :collisions collisions)))
   entities)
-
-
-
-(def cir (circle 5 5 5))
-
-;corner point is bottom-left
-(def rec (rectangle 10 0 10 10))
-
-
-
-(def poly (polygon (float-array [10.0 0.0 10.0 10.0 20.0 10.0 20.0 0.0])))
-(polygon! poly :set-origin 15 5)
-(polygon! poly :set-rotation -10)
-
-(def verts (polygon! poly :get-transformed-vertices))
-
-(partition 2 verts)
-
-(intersector! :overlaps cir rec)
-
-(for [x (filter even? [1 2 3 4 5 6 7 8])]
-  (prn :x x))
-
-(filter (comp some? :c) [{:a 1} {:b 2} {:c 3}])
-(filter :c [{:a 1} {:b 2} {:c 3}]) 
-
-(remove #(some? (#{1 2 3} %)) [1 2 3 4 5 6 7])

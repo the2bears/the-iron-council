@@ -22,6 +22,7 @@
        (map (fn [entity]
               (cond (:gunship? entity) (gs/move-player-tick screen entities entity)
                     (:bullet? entity) (bullet/move-bullet screen entity)
+                    (:enemy? entity) (enemy/move-enemy screen entity)
                     (:track? entity) (tr/move-track screen entity)
                     :else entity)))))
 
