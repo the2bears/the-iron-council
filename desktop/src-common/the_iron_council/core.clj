@@ -4,10 +4,12 @@
             [the-iron-council.bullet :as bullet]
             [the-iron-council.collision :as collision]
             [the-iron-council.common :as c]
+            [the-iron-council.debug-renderer :as debug]
             [the-iron-council.enemy :as enemy]
             [the-iron-council.gunship :refer :all :as gs]
             [the-iron-council.track :refer [create-curved-track create-track-entity] :as tr])
-  (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]))
+  (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]
+           [com.badlogic.gdx.graphics.glutils ShapeRenderer]))
 
 (defn on-new-game [screen entities]
   (update! screen
@@ -31,10 +33,8 @@
     (if (empty? bullet-ids)
       entities
       (do
-        ;(prn :collision-bullets bullet-ids :all-bullets (filter :bullet? entities))
         (update! screen :collisions [])
         (let [updated-entities (remove #(some? (bullet-ids (:id %))) entities)]
-          ;(prn :count-entities (count entities) :count-updated (count updated-entities))
           updated-entities)))))
 
 (defn check-for-input [{:keys [game-state option-type] :as screen} entities]
@@ -104,6 +104,7 @@
   (fn [screen entities]
     (let [screen (update! screen
                           :renderer (stage)
+                          :shape-renderer (ShapeRenderer.)
                           :camera (orthographic :set-to-ortho false (c/screen-to-world c/game-width) (c/screen-to-world c/game-height))
                           :world (box-2d 0 0);-2.0)
                           :game-state :attract-mode
@@ -157,7 +158,8 @@
 ;                (when (= 0 (mod ticks 60))
 ;                  (prn :bullet-count (count (filter :bullet? entities))) 
                 (if c/debug
-                  (.render debug-renderer world (.combined camera)))
+                  ;(.render debug-renderer world (.combined camera))
+                  (debug/render screen entities))
                 entities))
             :else
             (let [entities
@@ -165,7 +167,8 @@
                            ;(check-game-status screen)
                            (render! screen))]
                (if c/debug
-                 (.render debug-renderer world (.combined camera)))
+                                        ;(.render debug-renderer world (.combined camera)))
+                 (debug/render screen entities))
                entities))))
 
   :on-key-up

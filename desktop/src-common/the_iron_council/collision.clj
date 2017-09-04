@@ -2,6 +2,10 @@
   (:require [play-clj.core :refer [update!]]
             [play-clj.math :refer [circle circle! intersector! polygon polygon! rectangle rectangle! vector-2 vector-2!]]))
 
+
+(comment
+   https://stackoverflow.com/questions/401847/circle-rectangle-collision-detection-intersection)
+
 (defn- overlap
   "Tests for overlap with circle and polygon"
   [c p]
@@ -27,17 +31,18 @@
 
 
 (defn- compute-collision [bullet {:keys [collider-type] :as enemy}]
-  (cond (= collider-type :poly)
+  (case collider-type
+        :poly
         (cond (overlap (:collider' bullet) (:collider enemy))
               {:bullet bullet :enemy enemy :at (:collider' bullet)}
               (overlap (:collider bullet) (:collider enemy))
               {:bullet bullet :enemy enemy :at (:collider bullet)})
-        (= collider-type :rect)
+        :rect
         (cond (intersector! :overlaps (:collider' bullet) (:collider enemy))
               {:bullet bullet :enemy enemy :at (:collider' bullet)}
               (intersector! :overlaps (:collider bullet) (:collider enemy))
               {:bullet bullet :enemy  enemy :at (:collider bullet)})
-        :else false))
+        false))
 
 (defn compute-collisions [{:keys [ticks] :as screen} entities]
   (let [bullets (filter :bullet? entities)

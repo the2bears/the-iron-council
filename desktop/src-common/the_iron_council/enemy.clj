@@ -53,9 +53,8 @@
             :y py1
             :angle 0
             :collider (polygon (polygon! poly-collider :get-transformed-vertices))
-            :collider-type :poly
-            :collider-half-width poly-len-offset
-            :collider-half-height poly-hght-offset)
+            :collider' (polygon (polygon! poly-collider :get-transformed-vertices))
+            :collider-type :poly)
      (assoc enemy
            :enemy? true
            :x x1
@@ -70,12 +69,13 @@
             :collider-type :rect)]))
            
 
-(defn move-enemy [screen {:keys [x y angle collider collider-type] :as enemy}]
+(defn move-enemy [screen {:keys [x y angle collider collider' collider-type] :as enemy}]
   (cond (= :poly collider-type);translate, then set origin, then rotate
         (do
-          (polygon! collider :set-origin x y)
-          (polygon! collider :set-rotation 0.15)
-          (let [new-collider (polygon (polygon! collider :get-transformed-vertices))]
-            (assoc enemy :angle (mod (+ angle 0.15) 360) :collider new-collider)))
+          (polygon! collider' :set-origin x y)
+          (polygon! collider' :set-rotation (+ angle 0.15))
+          (let [new-collider (polygon (polygon! collider' :get-transformed-vertices))]
+            ;(prn :move-enemy :angle (polygon! collider :get-rotation))
+            (assoc enemy :angle (+ angle 0.15) :collider new-collider)))
         :else enemy))
         
