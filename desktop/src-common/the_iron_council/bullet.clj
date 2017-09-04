@@ -1,7 +1,7 @@
- (ns the-iron-council.bullet
+(ns the-iron-council.bullet
   (:require [play-clj.core :refer [color pixmap! pixmap* pixmap-format shape x y] :as core]
             [play-clj.g2d :refer [texture]]
-            [play-clj.math :refer [circle circle! vector-2]]
+            [play-clj.math :refer [circle circle! polygon polygon! vector-2]]
             [the-iron-council.common :as c]))
 
 (def cannon-shell-texture (atom nil))
@@ -32,8 +32,15 @@
                          @cannon-shell-texture)
                        :else @cannon-shell-texture)
         x (- x (core/x bullet-start-offset-vector))
-        y (- y (core/y bullet-start-offset-vector))]
-                                        ;(sounds/play-once :bullet)
+        y (- y (core/y bullet-start-offset-vector))
+        c-p-verts (float-array [x (+ y (- c/bullet-height c/bullet-width))
+                                (+ x c/bullet-width) (+ y (- c/bullet-height c/bullet-width))
+                                (+ x c/bullet-width) (+ y c/bullet-height c/bullet-speed)
+                                x (+ y c/bullet-height c/bullet-speed)])
+        collider-poly (polygon c-p-verts)]
+    (doto collider-poly
+      (polygon! :set-origin x y)
+      (polygon! :set-rotation a))
     (assoc cannon-shell
       :id (uuid)
       :bullet? true
@@ -43,11 +50,18 @@
       :y y
       :angle a
       :velocity cannon-velocity-vector
-      :collider (circle (+ x (c/screen-to-world 3)) (+ y (c/screen-to-world 11)) c/bullet-hitbox-x)
-      :collider' (circle (+ x (c/screen-to-world 3)) (+ y (c/screen-to-world 11)) c/bullet-hitbox-x)
+      :collider (polygon (polygon! collider-poly :get-transformed-vertices))
+      :collider-type :poly
       :c-x-offset (c/screen-to-world 3)
       :c-y-offset (c/screen-to-world 11)
-      :width c/bullet-width :height c/bullet-height)))
+      :width c/bullet-width
+      :height c/bullet-height)))
+
+(defn gatling-collider-verts [x y]
+  (float-array [x (+ y (c/screen-to-world 6))
+                (+ x (c/screen-to-world 2)) (+ y (c/screen-to-world 6))
+                (+ x (c/screen-to-world 2)) (+ y (c/screen-to-world 8) c/gatling-shell-speed)
+                x (+ y (c/screen-to-world 8) c/gatling-shell-speed)]))
 
 (defn- create-gatling-shell-texture []
   (let [pix-map (pixmap* 2 8 (pixmap-format :r-g-b-a8888))]
@@ -74,8 +88,15 @@
         x-l (- x (core/x gatling-start-offset-vector-left))
         y-l (- y (core/y gatling-start-offset-vector-left))
         x-r (- x (core/x gatling-start-offset-vector-right))
-        y-r (- y (core/y gatling-start-offset-vector-right))]
-                                        ;(sounds/play-once :bullet)
+        y-r (- y (core/y gatling-start-offset-vector-right))
+        collider-left-poly (polygon (gatling-collider-verts x-l y-l))
+        collider-right-poly (polygon (gatling-collider-verts x-r y-r))]
+    (doto collider-left-poly
+      (polygon! :set-origin x-l y-l)
+      (polygon! :set-rotation a))
+    (doto collider-right-poly
+      (polygon! :set-origin x-r y-r)
+      (polygon! :set-rotation a))
     [(assoc gatling-shell-left
        :id (uuid)
        :bullet? true
@@ -85,11 +106,12 @@
        :y y-l
        :angle a
        :velocity gatling-velocity-vector
-       :collider (circle x-l y-l c/gatling-hitbox-x)
-       :collider' (circle x-l y-l c/gatling-hitbox-x)
+       :collider (polygon (polygon! collider-left-poly :get-transformed-vertices))
+       :collider-type :poly
        :c-x-offset (c/screen-to-world 1)
        :c-y-offset (c/screen-to-world 6)
-       :width c/gatling-shell-width :height c/gatling-shell-height)
+       :width c/gatling-shell-width
+       :height c/gatling-shell-height)
      (assoc gatling-shell-right
        :id (uuid)
        :bullet? true
@@ -99,11 +121,18 @@
        :y y-r
        :angle a
        :velocity gatling-velocity-vector
-       :collider (circle x-r y-r c/gatling-hitbox-x)
-       :collider' (circle x-r y-r c/gatling-hitbox-x)
+       :collider (polygon (polygon! collider-right-poly :get-transformed-vertices))
+       :collider-type :poly
        :c-x-offset (c/screen-to-world 1)
        :c-y-offset (c/screen-to-world 6)
-       :width c/gatling-shell-width :height c/gatling-shell-height)]))
+       :width c/gatling-shell-width
+       :height c/gatling-shell-height)]))
+
+(defn rocket-collider-verts [x y]
+  (float-array [x (+ y (c/screen-to-world 2))
+                (+ x (c/screen-to-world 3)) (+ y (c/screen-to-world 2))
+                (+ x (c/screen-to-world 3)) (+ y (c/screen-to-world 4) c/rocket-speed)
+                x (+ y (c/screen-to-world 4) c/rocket-speed)]))
 
 (defn- create-rocket-texture []
   (let [pix-map (pixmap* 4 4 (pixmap-format :r-g-b-a8888))]
@@ -130,8 +159,16 @@
         x-l (- x (core/x rocket-start-offset-vector-left))
         y-l (- y (core/y rocket-start-offset-vector-left))
         x-r (- x (core/x rocket-start-offset-vector-right))
-        y-r (- y (core/y rocket-start-offset-vector-right))]
+        y-r (- y (core/y rocket-start-offset-vector-right))
                                         ;(sounds/play-once :bullet)
+        collider-left-poly (polygon (rocket-collider-verts x-l y-l))
+        collider-right-poly (polygon (rocket-collider-verts x-r y-r))]
+    (doto collider-left-poly
+      (polygon! :set-origin x-l y-l)
+      (polygon! :set-rotation a))
+    (doto collider-right-poly
+      (polygon! :set-origin x-r y-r)
+      (polygon! :set-rotation a))
     [(assoc rocket-left
        :id (uuid)
        :bullet? true
@@ -141,11 +178,12 @@
        :y y-l
        :angle a
        :velocity rocket-velocity-vector
-       :collider (circle x-l y-l c/rocket-hitbox-x)
-       :collider' (circle x-l y-l c/rocket-hitbox-x)
+       :collider (polygon (polygon! collider-left-poly :get-transformed-vertices))
+       :collider-type :poly
        :c-x-offset (c/screen-to-world 1.5)
        :c-y-offset (c/screen-to-world 3)
-       :width c/rocket-width :height c/rocket-height)
+       :width c/rocket-width
+       :height c/rocket-height)
      (assoc rocket-right
        :id (uuid)
        :bullet? true
@@ -155,23 +193,22 @@
        :y y-r
        :angle a
        :velocity rocket-velocity-vector
-       :collider (circle x-r y-r c/rocket-hitbox-x)
-       :collider' (circle x-r y-r c/rocket-hitbox-x)
+       :collider (polygon (polygon! collider-right-poly :get-transformed-vertices))
+       :collider-type :poly
        :c-x-offset (c/screen-to-world 1.5)
        :c-y-offset (c/screen-to-world 3)
-       :width c/rocket-width :height c/rocket-height)]))
-
+       :width c/rocket-width
+       :height c/rocket-height)]))
 
 (defn handle-collision [bullet other-entity screen entities]
   (cond ;(:oob? other-entity)
         ;(remove #(= (:id bullet) (:id %)) entities)
         :else entities))
 
-(defn move-bullet [screen {:keys [ttl x y c-x-offset c-y-offset velocity collider collider'] :as bullet}]
+(defn move-bullet [screen {:keys [ttl x y c-x-offset c-y-offset velocity collider] :as bullet}]
   (let [dx (core/x velocity)
         dy (core/y velocity)]
     (when (> ttl 0)
       (do
-        (circle! collider :set-position (+ x dx c-x-offset) (+ y dy c-y-offset))
-        (circle! collider' :set-position (+ x (/ dx 2) c-x-offset) (+ y (/ dy 2) c-y-offset))
-        (assoc bullet :ttl (dec ttl) :x (+ x dx) :y (+ y dy))))))
+        (polygon! collider :translate dx dy)
+        (assoc bullet :ttl (dec ttl) :x (+ x dx) :y (+ y dy) :collider (polygon (polygon! collider :get-transformed-vertices)))))))

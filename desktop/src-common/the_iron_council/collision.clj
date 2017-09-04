@@ -3,6 +3,11 @@
             [play-clj.math :refer [circle circle! intersector! polygon polygon! rectangle rectangle! vector-2 vector-2!]]))
 
 
+(defmethod clojure.core/print-method com.badlogic.gdx.math.Polygon
+  [p w]
+  (print-method (into [] (polygon! p :get-vertices)) w))
+
+
 (comment
    https://stackoverflow.com/questions/401847/circle-rectangle-collision-detection-intersection)
 
@@ -29,19 +34,12 @@
                     (polygon! p :contains v3))]
     overlap))
 
-
 (defn- compute-collision [bullet {:keys [collider-type] :as enemy}]
   (case collider-type
         :poly
-        (cond (overlap (:collider' bullet) (:collider enemy))
-              {:bullet bullet :enemy enemy :at (:collider' bullet)}
-              (overlap (:collider bullet) (:collider enemy))
-              {:bullet bullet :enemy enemy :at (:collider bullet)})
-        :rect
-        (cond (intersector! :overlaps (:collider' bullet) (:collider enemy))
-              {:bullet bullet :enemy enemy :at (:collider' bullet)}
-              (intersector! :overlaps (:collider bullet) (:collider enemy))
-              {:bullet bullet :enemy  enemy :at (:collider bullet)})
+        (let [overlaps? (intersector! :overlap-convex-polygons (:collider bullet) (:collider enemy))]
+          (when overlaps?
+            {:bullet bullet :enemy enemy :at (:collider enemy)}))
         false))
 
 (defn compute-collisions [{:keys [ticks] :as screen} entities]
