@@ -6,6 +6,7 @@
             [the-iron-council.common :as c]
             [the-iron-council.debug-renderer :as debug]
             [the-iron-council.enemy :as enemy]
+            [the-iron-council.explosion :as exp]
             [the-iron-council.gunship :refer :all :as gs]
             [the-iron-council.track :refer [create-curved-track create-track-entity] :as tr])
   (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]
@@ -26,6 +27,7 @@
                     (:bullet? entity) (bullet/move-bullet screen entity)
                     (:enemy? entity) (enemy/move-enemy screen entity)
                     (:track? entity) (tr/move-track screen entity)
+                    (:explosion? entity) (exp/handle-explosion entity)
                     :else entity)))))
 
 (defn handle-collisions [{:keys [collisions] :as screen} entities]
@@ -34,8 +36,10 @@
       entities
       (do
         (update! screen :collisions [])
-        (let [updated-entities (remove #(some? (bullet-ids (:id %))) entities)]
-          updated-entities)))))
+        (let [updated-entities (remove #(some? (bullet-ids (:id %))) entities)
+              bullets (filter #(some? (bullet-ids (:id %))) entities)
+              explosions (map (fn[bullet](exp/create-explosion (+ (:x bullet) (:c-x-offset bullet)) (+ (:y bullet) (:c-y-offset bullet)))) bullets)]
+          (concat updated-entities explosions))))))
 
 (defn check-for-input [{:keys [game-state option-type] :as screen} entities]
   (case (:game-state screen)
