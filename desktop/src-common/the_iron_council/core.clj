@@ -28,6 +28,7 @@
                     (:enemy? entity) (enemy/move-enemy screen entity)
                     (:track? entity) (tr/move-track screen entity)
                     (:explosion? entity) (exp/handle-explosion entity)
+                    (:train? entity) (enemy/move-train screen entities entity)
                     :else entity)))))
 
 (defn handle-collisions [{:keys [collisions] :as screen} entities]
@@ -134,8 +135,8 @@
       [(assoc top-oob :id :top-oob :oob? true :render-layer 0)
        (assoc bottom-oob :id :bottom-oob :oob? true :render-layer 0)
        (assoc left-oob :id :left-oob :oob? true :render-layer 0)
-       (assoc right-oob :id :right-oob :oob? true :render-layer 0)
-       enemy]))
+       (assoc right-oob :id :right-oob :oob? true :render-layer 0)]))
+;       enemy]))
 
   :on-render
   (fn [screen entities]
@@ -195,7 +196,10 @@
               (update! screen :fire-cannon-when-ready true)
               (update! screen :fire-gatling-when-ready true)
               ;(update! screen :fire-rocket-when-ready true)
-              entities))
+              entities)
+            (= (:key screen) (key-code :e))
+            (let [car (enemy/create-test-car screen entities)]
+              (concat entities car)))
       :paused
       (cond (= (:key screen) (key-code :p))
             (do
