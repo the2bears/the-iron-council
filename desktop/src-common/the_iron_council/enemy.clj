@@ -7,8 +7,8 @@
 (def rec-side (c/screen-to-world 10))
 (def rec-offset (- (/ rec-side 2)))
 
-(def poly-length (c/screen-to-world 32))
-(def poly-height (c/screen-to-world 64))
+(def poly-length (c/screen-to-world 36))
+(def poly-height (c/screen-to-world 72))
 (def poly-len-offset (/ poly-length 2))
 (def poly-height-offset (/ poly-height 2))
 
@@ -47,15 +47,19 @@
         current-tracks (sort-by :at-ticks (filter :track? entities))
         x (/ c/game-width-adj 2)
         y c/game-height-adj
+        car-collider (create-test-collider x y poly-len-offset poly-height-offset)
         track (last current-tracks)]
     [(assoc car-shape
             :train? true
+            :enemy? true
             :x x
             :y y
             :angle 0
             :render-layer 5
             :track (:at-ticks track)
-            :i-point-index 0)]))
+            :i-point-index 0
+            :collider (polygon (polygon! car-collider :get-transformed-vertices))
+            :collider-type :poly)]))
 
 (defn move-enemy [screen {:keys [x y angle collider-len-offset collider-height-offset collider-type] :as enemy}]
   (cond (= :poly collider-type)
@@ -88,10 +92,12 @@
             next-track (next-track-entity track tracks)
             next-a (if (nil? next-track) 0.0 (:angle next-track))
             d-a (- next-a angle)
-            angle-offset (* d-a (/ i-point-index (count i-points)))]
+            angle-offset (* d-a (/ i-point-index (count i-points)))
+            new-collider (create-test-collider x y poly-len-offset poly-height-offset)]
+        (polygon! new-collider :set-rotation (+ angle angle-offset))
 ;        (prn :x (* x c/s-to-w-divider) :y (* y c/s-to-w-divider) :a-c-p a-c-p :angle (+ angle-offset angle))
         (assoc entity
                :x x :y y :i-point-index (if get-next 0 (inc i-point-index)) :angle (+ angle-offset angle)
-               :track (if get-next (:at-ticks next-track) track)))
+               :track (if get-next (:at-ticks next-track) track) :collider (polygon (polygon! new-collider :get-transformed-vertices))))
       entity)))
 
