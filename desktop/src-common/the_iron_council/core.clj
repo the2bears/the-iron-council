@@ -81,6 +81,14 @@
       :else entities)
     entities))
 
+(defn enemy-test [{:keys [ticks train-car-start] :as screen} entities]
+  (if (and (some? train-car-start)
+           (= 0 (mod (inc ticks) 382)))
+      (do
+        (prn :enemy-test :add-car :ticks ticks)
+        (concat entities (enemy/create-test-car screen entities)))
+      entities))
+  
 (defn create-oob-body!
   [screen width height]
   (let [body (add-body! screen (body-def :static))]
@@ -114,6 +122,7 @@
                           :world (box-2d 0 0);-2.0)
                           :game-state :attract-mode
                           :ticks 0
+                          :track-pieces 0
                           :option-type :gatling
                           :fire-cannon-when-ready true
                           :fire-gatling-when-ready true
@@ -155,13 +164,13 @@
                          (step! screen)
                          (check-for-input screen)
                          (handle-all-entities screen);move done here
+                         (flatten)
                          (tr/add-tracks screen)
+                         ;(enemy-test screen)
                          (collision/compute-collisions screen);collisions detected
                          (handle-collisions screen);collisions handled
                          (sort-by :render-layer)
                          (render! screen))]
-;                (when (= 0 (mod ticks 60))
-;                  (prn :bullet-count (count (filter :bullet? entities))) 
                 (if c/debug
                   ;(.render debug-renderer world (.combined camera))
                   (debug/render screen entities))
@@ -199,7 +208,9 @@
               entities)
             (= (:key screen) (key-code :e))
             (let [car (enemy/create-test-car screen entities)]
-              (concat entities car)))
+              (conj entities car))
+            (= (:key screen) (key-code :t))
+            (prn (:ticks screen)))
       :paused
       (cond (= (:key screen) (key-code :p))
             (do

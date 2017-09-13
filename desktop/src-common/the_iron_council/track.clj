@@ -1,8 +1,10 @@
 (ns the-iron-council.track
-  (:require [play-clj.core :refer [color pixmap! pixmap* pixmap-format shape update! x y] :as core]
+  (:require [clojure.pprint :as pp]
+            [play-clj.core :refer [color pixmap! pixmap* pixmap-format shape update! x y] :as core]
             [play-clj.g2d :refer [texture]]
             [play-clj.math :refer [vector-2 vector-2!]]
-            [the-iron-council.common :as c]))
+            [the-iron-council.common :as c]
+            [the-iron-council.enemy :as enemy]))
 
 (def track-texture (atom nil))
 (def track-speed -1.5);1
@@ -36,8 +38,9 @@
 
 (defn- create-track-sequence
   ([s r n]
-   (let [{:keys [x y v]} (last s)]
-     (create-track-sequence x y v r s n)))
+   (let [s (sort-by :y s)
+         {:keys [x y v]} (last s)]
+     (create-track-sequence x y v r (drop-last s) n)))
   ([x y v r n]
    (create-track-sequence x y v r [] n))
   ([x y v r acc n]
@@ -101,23 +104,17 @@
 (defn create-curved-track [screen]
   (let [track (-> (create-track-sequence (/ c/game-width 8) 0 (vector-2 0 12) -1 30)
                   (create-track-sequence 0 5)
-                  ;(create-track-sequence 1 4);new
                   (create-track-sequence 2 30)
-                  ;(create-track-sequence 1 4);n
                   (create-track-sequence -2 20)
-                  ;(create-track-sequence -1 8);n
                   (create-track-sequence 0 10)
                   (create-track-sequence 1 10)
                   (create-track-sequence 0 15)
-                  ;(create-track-sequence 2 4);n
                   (create-track-sequence 4 10)
                   (create-track-sequence -4 10)
-                  ;(create-track-sequence -2 8);n
-                  ;(create-track-sequence -1 4);n
                   (create-track-sequence 0 100))]
-    (update! screen :track track)))
+   (update! screen :track (sort-by :y track))))
 
-(defn add-tracks [{:keys [ticks] :as screen} entities]
+(defn add-tracks [{:keys [ticks track-pieces] :as screen} entities]
   (let [limit (* ticks track-speed)
         new-pieces (take-while (partial track-within-limit limit) (:track screen))
         remaining (drop-while (partial track-within-limit limit) (:track screen))
@@ -129,7 +126,7 @@
                                                                    (:i-points t))))
                              []
                              new-pieces)]
-    (update! screen :track remaining)
+    (update! screen :track remaining :track-pieces (+ track-pieces (count new-pieces)))
     (concat entities new-entities)))
 
 (defn move-track
