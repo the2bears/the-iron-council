@@ -111,7 +111,11 @@
                   (create-track-sequence 0 15)
                   (create-track-sequence 4 10)
                   (create-track-sequence -4 10)
-                  (create-track-sequence 0 100))]
+                  (create-track-sequence 0 100)
+                  (create-track-sequence -2 10)
+                  (create-track-sequence 0 20)
+                  (create-track-sequence 2 10)
+                  (create-track-sequence 0 20))]
    (update! screen :track (sort-by :y track))))
 
 (defn add-tracks [{:keys [ticks track-pieces] :as screen} entities]

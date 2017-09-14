@@ -19,19 +19,10 @@
             (.end))
     "default"))
 
-(defn- render-collider2 [^ShapeRenderer shape-renderer
-                         {:keys [collider-poly collider-type] :as entity}]
-  (case collider-type
-    :test (doto shape-renderer
-            (.begin)
-            (.polygon (polygon! collider-poly :get-vertices))
-            (.end))
-    "default"))
-
 (defn render [{:keys [camera shape-renderer] :as screen} entities]
   (doto shape-renderer
     (.setProjectionMatrix (.combined camera))
-    (.setColor 1 1 1 1)
+    (.setColor 0 0 0 1)
     (.setAutoShapeType true))  
   (if-let [collidables (filter #(some? (:collider %)) entities)]
     (run! (fn[collidable]
