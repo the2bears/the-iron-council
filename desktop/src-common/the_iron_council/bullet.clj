@@ -2,7 +2,8 @@
   (:require [play-clj.core :refer [color pixmap! pixmap* pixmap-format shape x y] :as core]
             [play-clj.g2d :refer [texture]]
             [play-clj.math :refer [circle circle! polygon polygon! vector-2]]
-            [the-iron-council.common :as c]))
+            [the-iron-council.common :as c]
+            [the-iron-council.utils :as utils]))
 
 (def cannon-shell-texture (atom nil))
 (def gatling-shell-texture (atom nil))
@@ -10,16 +11,11 @@
 
 (defn uuid [] (str (java.util.UUID/randomUUID)))
 
-(defn- draw-rects [pix-map c x y w h]
-  (doto pix-map
-    (pixmap! :set-color c)
-    (pixmap! :fill-rectangle x y w h)))
-
 (defn- create-cannon-shell-texture []
   (let [pix-map (pixmap* 8 16 (pixmap-format :r-g-b-a8888))]
     (doseq [color-set c/bullet-rects]
       (doseq [[x y w h] (partition 4 (second color-set))]
-        (draw-rects pix-map (first color-set) x y w h)))
+        (utils/pix-map-rect pix-map (first color-set) x y w h)))
     (texture pix-map :set-region 0 0 6 14)))
 
 (defn fire-cannon!
@@ -67,7 +63,7 @@
   (let [pix-map (pixmap* 2 8 (pixmap-format :r-g-b-a8888))]
     (doseq [color-set c/gatling-shell-rects]
       (doseq [[x y w h] (partition 4 (second color-set))]
-        (draw-rects pix-map (first color-set) x y w h)))
+        (utils/pix-map-rect pix-map (first color-set) x y w h)))
     (texture pix-map :set-region 0 0 2 8)))
 
 (defn fire-gatling!
@@ -138,7 +134,7 @@
   (let [pix-map (pixmap* 4 4 (pixmap-format :r-g-b-a8888))]
     (doseq [color-set c/rocket-rects]
       (doseq [[x y w h] (partition 4 (second color-set))]
-        (draw-rects pix-map (first color-set) x y w h)))
+        (utils/pix-map-rect pix-map (first color-set) x y w h)))
     (texture pix-map :set-region 0 0 3 4)))
 
 (defn fire-rocket!
