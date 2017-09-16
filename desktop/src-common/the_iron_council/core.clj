@@ -80,14 +80,6 @@
         entities)
       :else entities)
     entities))
-
-(defn enemy-test [{:keys [ticks train-car-start] :as screen} entities]
-  (if (and (some? train-car-start)
-           (= 0 (mod (inc ticks) 382)))
-      (do
-        (prn :enemy-test :add-car :ticks ticks)
-        (concat entities (enemy/create-test-car screen entities)))
-      entities))
   
 (defn create-oob-body!
   [screen width height]
@@ -207,7 +199,7 @@
               ;(update! screen :fire-rocket-when-ready true)
               entities)
             (= (:key screen) (key-code :e))
-            (let [car (enemy/create-test-car screen entities)]
+            (let [car (enemy/create-train-car screen entities)]
               (conj entities car))
             (= (:key screen) (key-code :t))
             (prn (:ticks screen)))
