@@ -41,10 +41,8 @@
           (when overlaps?
             {:bullet bullet :enemy enemy :at (:collider enemy)}))
         :multi
-        (let [enemy-poly (get-in enemy [:collider :polygon])
-              overlaps? (intersector! :overlap-convex-polygons (:collider bullet) enemy-poly)]
-          (when overlaps?
-            {:bullet bullet :enemy enemy :at (:collider enemy)}))
+        (for [e (:collider enemy)]
+          (compute-collision bullet e))
         false))
 
 (defn compute-collisions [{:keys [ticks] :as screen} entities]
@@ -55,5 +53,5 @@
                       (if-some [collision (compute-collision bullet enemy)]
                         collision))]
     (when (not (empty? collisions))
-      (update! screen :collisions collisions)))
+      (update! screen :collisions (flatten collisions))))
   entities)

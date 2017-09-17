@@ -10,10 +10,8 @@
             (.begin)
             (.polygon (polygon! collider :get-vertices))
             (.end))
-    :multi (doto shape-renderer
-             (.begin)
-             (.polygon (polygon! (:polygon collider) :get-vertices))
-             (.end))
+    :multi (doseq [enemy collider]
+             (render-collider shape-renderer enemy))
     :rect (doto shape-renderer
             (.begin)
             (.rect (rectangle! collider :get-x)
