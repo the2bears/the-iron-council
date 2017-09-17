@@ -10,6 +10,10 @@
             (.begin)
             (.polygon (polygon! collider :get-vertices))
             (.end))
+    :multi (doto shape-renderer
+             (.begin)
+             (.polygon (polygon! (:polygon collider) :get-vertices))
+             (.end))
     :rect (doto shape-renderer
             (.begin)
             (.rect (rectangle! collider :get-x)
@@ -22,7 +26,7 @@
 (defn render [{:keys [camera shape-renderer] :as screen} entities]
   (doto shape-renderer
     (.setProjectionMatrix (.combined camera))
-    (.setColor 0 0 0 1)
+    (.setColor 1 0 0 1)
     (.setAutoShapeType true))  
   (if-let [collidables (filter #(some? (:collider %)) entities)]
     (run! (fn[collidable]

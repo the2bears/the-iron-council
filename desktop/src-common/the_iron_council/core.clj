@@ -8,6 +8,7 @@
             [the-iron-council.enemy :as enemy]
             [the-iron-council.explosion :as exp]
             [the-iron-council.gunship :refer :all :as gs]
+            [the-iron-council.snow :as snow]
             [the-iron-council.track :refer [create-curved-track create-track-entity] :as tr])
   (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]
            [com.badlogic.gdx.graphics.glutils ShapeRenderer]))
@@ -29,6 +30,7 @@
                     (:track? entity) (tr/move-track screen entity)
                     (:explosion? entity) (exp/handle-explosion entity)
                     (:train? entity) (enemy/move-train screen entities entity)
+                    (:snow? entity) (snow/move-snow screen entity)
                     :else entity)))))
 
 (defn handle-collisions [{:keys [collisions] :as screen} entities]
@@ -132,12 +134,12 @@
           right-oob (doto
                        (create-oob-entity! screen c/oob-padding c/oob-y-length)
                       (body-position! (+ c/game-width-adj c/oob-padding) (- c/oob-padding) 0))
-          enemy (enemy/create-test-enemy)]
+          snow (snow/create-snow)]
       [(assoc top-oob :id :top-oob :oob? true :render-layer 0)
        (assoc bottom-oob :id :bottom-oob :oob? true :render-layer 0)
        (assoc left-oob :id :left-oob :oob? true :render-layer 0)
-       (assoc right-oob :id :right-oob :oob? true :render-layer 0)]))
-;       enemy]))
+       (assoc right-oob :id :right-oob :oob? true :render-layer 0)
+       snow]))
 
   :on-render
   (fn [screen entities]
@@ -146,7 +148,7 @@
           camera (:camera screen)
           ticks (:ticks screen)
           game-state (:game-state screen)]
-      (clear! 0.1 0.1 0.12 1)
+      (clear! 1 1 1 1) ;0.1 0.1 0.12 1
       (cond (not= :paused game-state)
             (do
               ;(Thread/sleep 50)
@@ -202,7 +204,10 @@
             (let [car (enemy/create-train-car screen entities)]
               (conj entities car))
             (= (:key screen) (key-code :t))
-            (prn (:ticks screen)))
+            (prn (:ticks screen))
+            (= (:key screen) (key-code :g))
+            (let [gunship (first (filter #(:gunship? %) entities))]
+              (clojure.pprint/pprint gunship)))
       :paused
       (cond (= (:key screen) (key-code :p))
             (do

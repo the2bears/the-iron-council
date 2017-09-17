@@ -43,32 +43,18 @@
     (texture pix-map :set-region 0 0 train-car-width train-car-length)))
 
 
-(defn- create-collider [x y len-offset height-offset]
-  (let [poly-verts (float-array [(- x len-offset) (- y height-offset)
-                                 (+ x len-offset) (- y height-offset)
-                                 (+ x len-offset) (+ y height-offset)
-                                 (- x len-offset) (+ y height-offset)])
-        poly (polygon poly-verts)]
-    (polygon! poly :set-origin x y)
-    poly))
-
-(defn create-test-enemy []
-  (let [poly-enemy (shape :filled
-                          :set-color (color 0.5 0.5 0.5 1)
-                          :rect (- train-car-width-offset) (- train-car-length-offset)
-                                train-car-width-adj train-car-length-adj)
-        px1 (/ c/game-width-adj 2)
-        py1 (- c/game-height-adj (/ c/game-height-adj 4))
-        poly-collider (create-collider px1 py1 train-car-width-offset train-car-length-offset)]
-    [(assoc poly-enemy
-            :enemy? true
-            :x px1
-            :y py1
-            :angle 0
-            :collider (polygon (polygon! poly-collider :get-transformed-vertices))
-            :collider-len-offset train-car-width-offset
-            :collider-height-offset train-car-length-offset
-            :collider-type :poly)]))
+(defn- update-collider
+  ([x y a {:keys [l w] :as c-map}]
+   (update-collider x y a w l))
+  ([x y a width-offset len-offset]
+   (let [poly-verts (float-array [(- x width-offset) (- y len-offset)
+                                  (+ x width-offset) (- y len-offset)
+                                  (+ x width-offset) (+ y len-offset)
+                                  (- x width-offset) (+ y len-offset)])
+         poly (polygon poly-verts)]
+     (polygon! poly :set-origin x y)
+     (polygon! poly :set-rotation a)
+     (polygon (polygon! poly :get-transformed-vertices)))));poly)))
 
 (defn create-train-car
  ([screen entities]
@@ -89,7 +75,7 @@
                           (reset! train-car-texture (create-train-car-texture))
                           @train-car-texture)
                         :else @train-car-texture)
-        car-collider (create-collider x y train-car-width-offset train-car-length-offset)]
+        car-collider (update-collider x y angle train-car-width-offset train-car-length-offset)]
     (assoc train-car
            :train? true
            :enemy? true
@@ -104,27 +90,17 @@
            :render-layer 5
            :track track
            :i-point-index i-point-index
-           :collider (polygon (polygon! car-collider :get-transformed-vertices))
-           :collider-type :poly))))
-
-(defn move-enemy [screen {:keys [x y angle collider-len-offset collider-height-offset collider-type] :as enemy}]
-  (cond (= :poly collider-type)
-        (let [dx (c/screen-to-world 0.03)
-              dy (- (c/screen-to-world 0.04))
-              new-x (+ x dx)
-              new-y (+ y dy)
-              new-collider (create-collider new-x new-y collider-len-offset collider-height-offset)]
-          (polygon! new-collider :set-rotation (+ angle 0.15))
-          (let [collider (polygon (polygon! new-collider :get-transformed-vertices))]
-            (assoc enemy :x (+ x dx) :y (+ y dy) :angle (+ angle 0.15) :collider collider)))
-        :else enemy))
+           :collider {:polygon car-collider
+                      :w train-car-width-offset
+                      :l train-car-length-offset}
+           :collider-type :multi))))
 
 (defn- next-track-entity [at-track tracks]
   (let [sorted-tracks (sort-by :at-ticks tracks)
         next-track (first (drop-while #(<= (:at-ticks %) at-track) sorted-tracks))]
     next-track))
 
-(defn move-train [screen entities {:keys [i-point-index track] :as entity}]
+(defn move-train [screen entities {:keys [collider i-point-index track] :as entity}]
   (let [tracks (filter :track? entities)]
     (if-let [track-entity (first (filter #(= track (:at-ticks %)) tracks))]
       (let [top-tracks (drop-while #(>= track (:at-ticks %)) tracks)
@@ -138,11 +114,12 @@
             next-a (if (nil? next-track) 0.0 (:angle next-track))
             d-a (- next-a angle)
             angle-offset (* d-a (/ i-point-index (count i-points)))
-            new-collider (create-collider x y train-car-width-offset train-car-length-offset)]
-        (polygon! new-collider :set-rotation (+ angle angle-offset))
+            new-collider (update-collider x y (+ angle angle-offset) collider)]
         (let [entity (assoc entity
                             :x x :y y :i-point-index (if get-next 0 (inc i-point-index)) :angle (+ angle-offset angle)
-                            :track (if get-next (:at-ticks next-track) track) :collider (polygon (polygon! new-collider :get-transformed-vertices)))]
+                            :track (if get-next (:at-ticks next-track) track) :collider {:polygon new-collider
+                                                                                         :l (:l collider)
+                                                                                         :w (:w collider)})]
           (if (and (= 8 (count top-tracks)) (:front? entity))
             [(assoc entity :front? false) (create-train-car screen entities (:at-ticks (last top-tracks)))]
             entity)))
