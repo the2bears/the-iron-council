@@ -6,13 +6,10 @@
             [the-iron-council.common :as c]
             [the-iron-council.enemy :as enemy]))
 
-(def track-texture (atom nil))
+(def tie-texture (atom nil))
+(def rail-texture (atom nil))
 (def track-speed -1.5);1
 (def track-speed-adj (c/screen-to-world track-speed))
-(def track-width 32)
-(def track-height 4)
-(def track-tie-color (color 0.14 0.12 0.11 1))
-(def track-rail-color (color 0.42 0.44 0.47 1))
 (def track-lower-limit (c/screen-to-world -60))
 (def i-points-per-track 9)
 
@@ -67,42 +64,85 @@
                            :v v
                            :i-points i-points})
                 next-v))))))
-                     
-(defn- create-track-texture []
+
+(def track-width 32)
+(def track-height 4)
+(def rail-width 2)
+(def upper-buffer 5)
+(def side-buffer 4)
+(def track-tie-color (color 0.14 0.12 0.11 1))
+(def track-rail-color (color 0.42 0.44 0.47 1))
+
+(defn- create-tie-texture []
   (let [pix-map (pixmap* track-width 16 (pixmap-format :r-g-b-a8888))]
-    (draw-rects pix-map track-tie-color 0 5 track-width track-height)
-    (draw-rects pix-map track-rail-color track-height 0 2 14)
-    (draw-rects pix-map track-rail-color 26 0 2 14)
+    (draw-rects pix-map track-tie-color 0 upper-buffer track-width track-height)
+    (texture pix-map :set-region 0 0 track-width 14)))
+
+(defn- create-rails-texture []
+  (let [pix-map (pixmap* track-width 16 (pixmap-format :r-g-b-a8888))]
+    (draw-rects pix-map track-rail-color side-buffer 0 rail-width 14)
+    (draw-rects pix-map track-rail-color (- track-width side-buffer rail-width) 0 rail-width 14)
     (texture pix-map :set-region 0 0 track-width 14)))
 
 (defn create-track-entity
   [x y angle ticks i-points]
-  (let [track-texture (cond (nil? @track-texture)
-                            (do
-                              (reset! track-texture (create-track-texture))
-                              @track-texture)
-                            :else @track-texture)]
-    (assoc track-texture
-           :width (c/screen-to-world 32)
-           :height (c/screen-to-world 14)
-           :x x
-           :y y
-           :angle angle
-           :translate-x (c/screen-to-world (- (/ track-width 2)))
-           :translate-y (c/screen-to-world (- (/ track-height 2)))
-           :track? true
-           :id :track
-           :at-ticks ticks
-           :i-points i-points
-           :render-layer 1
-           :speed track-speed-adj)))
+  (let [tie-texture (cond (nil? @tie-texture)
+                          (do
+                            (reset! tie-texture (create-tie-texture))
+                            @tie-texture)
+                          :else @tie-texture)
+        rail-texture (cond (nil? @rail-texture)
+                           (do
+                             (reset! rail-texture (create-rails-texture))
+                             @rail-texture)
+                           :else @rail-texture)]
+    [(assoc tie-texture
+            :width (c/screen-to-world 32)
+            :height (c/screen-to-world 14)
+            :x x
+            :y y
+            :angle angle
+            :translate-x (c/screen-to-world (- (/ track-width 2)))
+            :translate-y (c/screen-to-world (- (/ track-height 2)))
+            :track? true
+            :id :track
+            :at-ticks ticks
+            :i-points i-points
+            :render-layer 1
+            :speed track-speed-adj)
+     (assoc rail-texture
+            :width (c/screen-to-world 32)
+            :height (c/screen-to-world 14)
+            :x x
+            :y y
+            :angle angle
+            :translate-x (c/screen-to-world (- (/ track-width 2)))
+            :translate-y (c/screen-to-world (- (/ track-height 2)))
+            :track? true
+            :id :track
+            :at-ticks ticks
+            :i-points i-points
+            :render-layer 2
+            :speed track-speed-adj)]))
 
 (defn- track-within-limit
   [limit {:keys [y] :as track-piece}]
   (< (+ y limit) (+ c/game-height 60)))
 
+
+(def t-t (create-track-sequence (/ c/game-width 8) 0 (vector-2 0 12) -0.5 10))
+(->> t-t
+     (map #(:x %))
+     (partition 2 1)
+     (map (fn[[a b]](- b a))))
+
+(def n 0.20942887663841248)
+
+(map #(* % n) [1 2 3 4 5 6 7 8 9 10])
+
 (defn create-curved-track [screen]
-  (let [track (-> (create-track-sequence (/ c/game-width 8) 0 (vector-2 0 12) -1 30)
+  (let [track (-> (create-track-sequence (/ c/game-width 8) 0 (vector-2 0 12) 0 5)
+                  (create-track-sequence -1 30)
                   (create-track-sequence 0 5)
                   (create-track-sequence 2 30)
                   (create-track-sequence -2 20)
@@ -122,12 +162,12 @@
   (let [limit (* ticks track-speed)
         new-pieces (take-while (partial track-within-limit limit) (:track screen))
         remaining (drop-while (partial track-within-limit limit) (:track screen))
-        new-entities (reduce (fn [acc t](conj acc
-                                              (create-track-entity (c/screen-to-world (:x t))
-                                                                   (c/screen-to-world (+ (:y t) limit))
-                                                                   (- (:angle t) 90)
-                                                                   ticks
-                                                                   (:i-points t))))
+        new-entities (reduce (fn [acc t](concat acc
+                                                (create-track-entity (c/screen-to-world (:x t))
+                                                                     (c/screen-to-world (+ (:y t) limit))
+                                                                     (- (:angle t) 90)
+                                                                     ticks
+                                                                     (:i-points t))))
                              []
                              new-pieces)]
     (update! screen :track remaining :track-pieces (+ track-pieces (count new-pieces)))
