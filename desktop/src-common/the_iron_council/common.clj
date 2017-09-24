@@ -2,7 +2,7 @@
   (:require [pixel-ships.bollinger :as bollinger :refer [color-scheme]]
             [play-clj.core :refer [color key-pressed?]]))
 
-(def debug false)
+(def debug true)
 
 (def ^:const s-to-w-divider 50.0)
 (defn screen-to-world [x]
@@ -96,12 +96,12 @@
 
 (defn- add-cells [model]
   (let [hull ((comp :hull :model) model)
-        new-hull  (into [] (concat hull [{:x 5 :y 11} {:x 5 :y 12}
-                                         {:x 5 :y 13} {:x 5 :y 14}
-                                         {:x 5 :y 15} {:x 5 :y 16}
-                                         {:x 5 :y 17} {:x 5 :y 18}
-                                         {:x 5 :y 19} {:x 5 :y 20}
-                                         {:x 4 :y 19}]))] ;{:x 5 :y 22}]))]
+        new-hull  (into hull [{:x 5 :y 11} {:x 5 :y 12}
+                              {:x 5 :y 13} {:x 5 :y 14}
+                              {:x 5 :y 15} {:x 5 :y 16}
+                              {:x 5 :y 17} {:x 5 :y 18}
+                              {:x 5 :y 19} {:x 5 :y 20}
+                              {:x 4 :y 19}])]
     (-> model
         (assoc-in [:model :hull] new-hull)
         (assoc :ship-y 24))))

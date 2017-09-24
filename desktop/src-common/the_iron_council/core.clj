@@ -27,7 +27,7 @@
               (cond (:gunship? entity) (gs/move-player-tick screen entities entity)
                     (:bullet? entity) (bullet/move-bullet screen entity)
                     ;(:enemy? entity) (enemy/move-enemy screen entity)
-                    (:track? entity) (tr/move-track screen entity)
+                    (or (:track? entity) (:rail? entity)) (tr/move-track screen entity)
                     (:explosion? entity) (exp/handle-explosion entity)
                     (:train? entity) (enemy/move-train screen entities entity)
                     (:snow? entity) (snow/move-snow screen entity)
@@ -42,7 +42,7 @@
         (let [updated-entities (remove #(some? (bullet-ids (:id %))) entities)
               bullets (filter #(some? (bullet-ids (:id %))) entities)
               explosions (map (fn[bullet](exp/create-explosion (+ (:x bullet) (:c-x-offset bullet)) (+ (:y bullet) (:c-y-offset bullet)))) bullets)]
-          (concat updated-entities explosions))))))
+          (into updated-entities explosions))))))
 
 (defn check-for-input [{:keys [game-state option-type] :as screen} entities]
   (case (:game-state screen)
@@ -56,7 +56,7 @@
               a (:angle gunship)]
           (update! screen :fire-cannon-when-ready false)
           (add-timer! screen :refresh-cannon-shot c/refresh-cannon)
-          (concat entities (list (bullet/fire-cannon! screen x y a))))
+          (into entities (list (bullet/fire-cannon! screen x y a))))
         entities)
       (and (get screen :fire-gatling-when-ready true)
            (c/cannon-key-pressed?) ;(key-pressed? :x))
@@ -67,7 +67,7 @@
               a (:angle gunship)]
           (update! screen :fire-gatling-when-ready false)
           (add-timer! screen :refresh-gatling-shot c/refresh-gatling)
-          (concat entities (bullet/fire-gatling! screen x y a)))
+          (into entities (bullet/fire-gatling! screen x y a)))
         entities)
       (and (get screen :fire-rocket-when-ready true)
            (c/cannon-key-pressed?) ;(key-pressed? :x))
@@ -78,7 +78,7 @@
               a (:angle gunship)]
           (update! screen :fire-rocket-when-ready false)
           (add-timer! screen :refresh-rocket-shot c/refresh-rocket)
-          (concat entities (bullet/fire-rocket! screen x y a)))
+          (into entities (bullet/fire-rocket! screen x y a)))
         entities)
       :else entities)
     entities))
@@ -116,7 +116,6 @@
                           :world (box-2d 0 0);-2.0)
                           :game-state :attract-mode
                           :ticks 0
-                          :track-pieces 0
                           :option-type :gatling
                           :fire-cannon-when-ready true
                           :fire-gatling-when-ready true

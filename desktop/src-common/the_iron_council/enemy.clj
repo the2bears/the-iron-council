@@ -108,12 +108,11 @@
            :collider-type :multi))))
 
 (defn- next-track-entity [at-track tracks]
-  (let [sorted-tracks (sort-by :at-ticks tracks)
-        next-track (first (drop-while #(<= (:at-ticks %) at-track) sorted-tracks))]
+  (let [next-track (first (drop-while #(<= (:at-ticks %) at-track) tracks))]
     next-track))
 
 (defn move-train [screen entities {:keys [collider i-point-index track] :as entity}]
-  (let [tracks (filter :track? entities)]
+  (let [tracks (sort-by :at-ticks (filter :track? entities))]
     (if-let [track-entity (first (filter #(= track (:at-ticks %)) tracks))]
       (let [top-tracks (drop-while #(>= track (:at-ticks %)) tracks)
             i-points (:i-points track-entity)

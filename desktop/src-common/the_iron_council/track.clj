@@ -118,9 +118,8 @@
             :angle angle
             :translate-x (c/screen-to-world (- (/ track-width 2)))
             :translate-y (c/screen-to-world (- (/ track-height 2)))
-            :track? true
+            :rail? true
             :id :track
-            :at-ticks ticks
             :i-points i-points
             :render-layer 2
             :speed track-speed-adj)]))
@@ -158,20 +157,20 @@
                   (create-track-sequence 0 20))]
    (update! screen :track (sort-by :y track))))
 
-(defn add-tracks [{:keys [ticks track-pieces] :as screen} entities]
+(defn add-tracks [{:keys [ticks] :as screen} entities]
   (let [limit (* ticks track-speed)
         new-pieces (take-while (partial track-within-limit limit) (:track screen))
         remaining (drop-while (partial track-within-limit limit) (:track screen))
-        new-entities (reduce (fn [acc t](concat acc
-                                                (create-track-entity (c/screen-to-world (:x t))
-                                                                     (c/screen-to-world (+ (:y t) limit))
-                                                                     (- (:angle t) 90)
-                                                                     ticks
-                                                                     (:i-points t))))
+        new-entities (reduce (fn [acc t](into acc
+                                              (create-track-entity (c/screen-to-world (:x t))
+                                                                   (c/screen-to-world (+ (:y t) limit))
+                                                                   (- (:angle t) 90)
+                                                                   ticks
+                                                                   (:i-points t))))
                              []
                              new-pieces)]
-    (update! screen :track remaining :track-pieces (+ track-pieces (count new-pieces)))
-    (concat entities new-entities)))
+    (update! screen :track remaining)
+    (into entities new-entities)))
 
 (defn move-track
   [screen {:keys [i-points y speed] :as entity}]

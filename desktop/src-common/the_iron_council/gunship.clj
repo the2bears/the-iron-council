@@ -49,7 +49,7 @@
          tags (keys (:pixels ship-map))
          pixels (:pixels ship-map)
          shape-builder (fn[s] (reduce (fn[acc n] (conj acc n)) [] s))]
-     (reduce (fn[acc tag](concat (shape-builder (tag pixels)) acc)) [] tags))))
+     (reduce (fn[acc tag](into acc (shape-builder (tag pixels)))) [] tags))))
 
 (defn create-pixel-ship-texture
   ([]
