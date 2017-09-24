@@ -103,6 +103,7 @@
            :front? true
            :render-layer 5
            :track track
+           :track-id :main-line
            :i-point-index i-point-index
            :collider [car-collider car-collider2]
            :collider-type :multi))))
@@ -111,8 +112,10 @@
   (let [next-track (first (drop-while #(<= (:at-ticks %) at-track) tracks))]
     next-track))
 
-(defn move-train [screen entities {:keys [collider i-point-index track] :as entity}]
-  (let [tracks (sort-by :at-ticks (filter :track? entities))]
+(defn move-train [screen entities {:keys [collider i-point-index track track-id] :as entity}]
+  (let [tracks (sort-by :at-ticks (->> entities
+                                       (filter :track?)
+                                       (filter #(= (:track-id %) track-id))))]
     (if-let [track-entity (first (filter #(= track (:at-ticks %)) tracks))]
       (let [top-tracks (drop-while #(>= track (:at-ticks %)) tracks)
             i-points (:i-points track-entity)

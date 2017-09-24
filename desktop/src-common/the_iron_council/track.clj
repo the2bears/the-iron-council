@@ -85,7 +85,7 @@
     (texture pix-map :set-region 0 0 track-width 14)))
 
 (defn create-track-entity
-  [x y angle ticks i-points]
+  [x y angle ticks i-points track-id]
   (let [tie-texture (cond (nil? @tie-texture)
                           (do
                             (reset! tie-texture (create-tie-texture))
@@ -105,7 +105,7 @@
             :translate-x (c/screen-to-world (- (/ track-width 2)))
             :translate-y (c/screen-to-world (- (/ track-height 2)))
             :track? true
-            :id :track
+            :track-id track-id
             :at-ticks ticks
             :i-points i-points
             :render-layer 1
@@ -119,8 +119,6 @@
             :translate-x (c/screen-to-world (- (/ track-width 2)))
             :translate-y (c/screen-to-world (- (/ track-height 2)))
             :rail? true
-            :id :track
-            :i-points i-points
             :render-layer 2
             :speed track-speed-adj)]))
 
@@ -128,33 +126,30 @@
   [limit {:keys [y] :as track-piece}]
   (< (+ y limit) (+ c/game-height 60)))
 
-
-(def t-t (create-track-sequence (/ c/game-width 8) 0 (vector-2 0 12) -0.5 10))
-(->> t-t
-     (map #(:x %))
-     (partition 2 1)
-     (map (fn[[a b]](- b a))))
-
-(def n 0.20942887663841248)
-
-(map #(* % n) [1 2 3 4 5 6 7 8 9 10])
-
 (defn create-curved-track [screen]
-  (let [track (-> (create-track-sequence (/ c/game-width 8) 0 (vector-2 0 12) 0 5)
-                  (create-track-sequence -1 30)
-                  (create-track-sequence 0 5)
-                  (create-track-sequence 2 30)
-                  (create-track-sequence -2 20)
-                  (create-track-sequence 0 10)
-                  (create-track-sequence 1 10)
-                  (create-track-sequence 0 15)
-                  (create-track-sequence 4 10)
-                  (create-track-sequence -4 10)
-                  (create-track-sequence 0 100)
-                  (create-track-sequence -2 10)
-                  (create-track-sequence 0 20)
-                  (create-track-sequence 2 10)
-                  (create-track-sequence 0 20))]
+  (let [track1 (create-track-sequence (/ c/game-width 8) 0 (vector-2 0 12) 0 35)
+        track2 (-> track1
+                   (create-track-sequence -1 30)
+                   (create-track-sequence 0 5)
+                   (create-track-sequence 2 30)
+                   (create-track-sequence -2 20)
+                   (create-track-sequence 0 10)
+                   (create-track-sequence 1 10)
+                   (create-track-sequence 0 15)
+                   (create-track-sequence 4 10)
+                   (create-track-sequence -4 10)
+                   (create-track-sequence 0 100)
+                   (create-track-sequence -2 10)
+                   (create-track-sequence 0 20)
+                   (create-track-sequence 2 10)
+                   (create-track-sequence 0 20))
+        track1 (map #(assoc % :track-id :main-line) track1)
+        track2 (map #(assoc % :track-id :main-line) track2)
+        track3 (-> track1
+                   (create-track-sequence 0 100)
+                   (create-track-sequence 0.2 45))
+        track3 (map #(assoc % :track-id :spur) track3)
+        track (into (into track1 track2) track3)]
    (update! screen :track (sort-by :y track))))
 
 (defn add-tracks [{:keys [ticks] :as screen} entities]
@@ -166,7 +161,8 @@
                                                                    (c/screen-to-world (+ (:y t) limit))
                                                                    (- (:angle t) 90)
                                                                    ticks
-                                                                   (:i-points t))))
+                                                                   (:i-points t)
+                                                                   (:track-id t))))
                              []
                              new-pieces)]
     (update! screen :track remaining)
