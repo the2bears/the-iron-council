@@ -127,9 +127,8 @@
   (< (+ y limit) (+ c/game-height 60)))
 
 (defn create-curved-track [screen]
-  (let [track1 (create-track-sequence (/ c/game-width 8) 0 (vector-2 0 12) 0 35)
-        track2 (-> track1
-                   (create-track-sequence -1 30)
+  (let [track1 (sort-by :y (create-track-sequence (/ c/game-width 8) 0 (vector-2 0 12) 0 35))
+        track2 (-> (create-track-sequence (:x (last track1)) (:y (last track1)) (:v (last track1)) -1 30)
                    (create-track-sequence 0 5)
                    (create-track-sequence 2 30)
                    (create-track-sequence -2 20)
@@ -138,19 +137,27 @@
                    (create-track-sequence 0 15)
                    (create-track-sequence 4 10)
                    (create-track-sequence -4 10)
-                   (create-track-sequence 0 100)
-                   (create-track-sequence -2 10)
+                   (create-track-sequence 0 100))
+        track2     (sort-by :y track2)
+        track3 (-> (create-track-sequence (:x (last track2)) (:y (last track2)) (:v (last track2)) -2 10)
                    (create-track-sequence 0 20)
                    (create-track-sequence 2 10)
                    (create-track-sequence 0 20))
-        track1 (map #(assoc % :track-id :main-line) track1)
-        track2 (map #(assoc % :track-id :main-line) track2)
-        track3 (-> track1
-                   (create-track-sequence 0 100)
+        track3 (sort-by :y track3)
+        track1' (sort-by :y (map #(assoc % :track-id :main-line) track1))
+        track2' (sort-by :y (map #(assoc % :track-id :main-line) track2))
+        track3' (sort-by :y (map #(assoc % :track-id :main-line) track3))
+        spur-1 (-> (create-track-sequence (:x (last track1)) (:y (last track1)) (:v (last track1)) 0 100)
                    (create-track-sequence 0.2 45))
-        track3 (map #(assoc % :track-id :spur) track3)
-        track (into (into track1 track2) track3)]
-   (update! screen :track (sort-by :y track))))
+        spur-1' (sort-by :y (map #(assoc % :track-id :spur) spur-1))
+        spur-2 (-> (create-track-sequence (:x (last track2)) (:y (last track2)) (:v (last track2)) 0 100))
+        spur-2' (sort-by :y (map #(assoc % :track-id :spur2) spur-2))
+        track (-> track1'
+                  (into track2')
+                  (into track3')
+                  (into spur-1')
+                  (into spur-2'))]
+    (update! screen :track (sort-by :y track))))
 
 (defn add-tracks [{:keys [ticks] :as screen} entities]
   (let [limit (* ticks track-speed)

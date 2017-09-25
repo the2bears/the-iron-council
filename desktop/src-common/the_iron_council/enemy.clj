@@ -69,11 +69,15 @@
 
 (defn create-train-car
  ([screen entities]
-  (let [current-tracks (sort-by :at-ticks (filter :track? entities))
+  (let [current-tracks (sort-by :at-ticks (->> entities
+                                               (filter :track?)
+                                               (filter #(= (:track-id %) :main-line))))
         track (:at-ticks (last current-tracks))]
     (create-train-car screen entities track)))
  ([screen entities track]
-  (let [current-tracks (sort-by :at-ticks (filter :track? entities))
+  (let [current-tracks (sort-by :at-ticks (->> entities
+                                               (filter :track?)
+                                               (filter #(= (:track-id %) :main-line))))
         track-entity (first (filter #(= track (:at-ticks %)) current-tracks))
         i-points (:i-points track-entity)
         i-point-index 0

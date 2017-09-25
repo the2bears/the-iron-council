@@ -4,7 +4,7 @@
             [the-iron-council.bullet :as bullet]
             [the-iron-council.collision :as collision]
             [the-iron-council.common :as c]
-            [the-iron-council.debug-renderer :as debug]
+            [the-iron-council.debug-renderer :as debugger]
             [the-iron-council.enemy :as enemy]
             [the-iron-council.explosion :as exp]
             [the-iron-council.gunship :refer :all :as gs]
@@ -120,6 +120,7 @@
                           :fire-cannon-when-ready true
                           :fire-gatling-when-ready true
                           :fire-rocket-when-ready true
+                          :debug true
                           :debug-renderer (Box2DDebugRenderer.))
           top-oob (doto
                     (create-oob-entity! screen c/oob-x-length c/oob-padding)
@@ -141,7 +142,7 @@
        snow]))
 
   :on-render
-  (fn [screen entities]
+  (fn [{:keys [debug] :as screen} entities]
     (let [debug-renderer (:debug-renderer screen)
           world (:world screen)
           camera (:camera screen)
@@ -164,22 +165,22 @@
                          (handle-collisions screen);collisions handled
                          (sort-by :render-layer)
                          (render! screen))]
-                (if c/debug
+                (if debug
                   ;(.render debug-renderer world (.combined camera))
-                  (debug/render screen entities))
+                  (debugger/render screen entities))
                 entities))
             :else
             (let [entities
                   (->> entities
                            ;(check-game-status screen)
                            (render! screen))]
-               (if c/debug
+               (if debug
                                         ;(.render debug-renderer world (.combined camera)))
-                 (debug/render screen entities))
+                 (debugger/render screen entities))
                entities))))
 
   :on-key-up
-  (fn [{:keys [option-type key] :as screen} entities]
+  (fn [{:keys [debug option-type key] :as screen} entities]
     (case (:game-state screen)
       :attract-mode
       (cond (= (:key screen) (key-code :num-1))
@@ -202,8 +203,10 @@
             (= (:key screen) (key-code :e))
             (let [car (enemy/create-train-car screen entities)]
               (conj entities car))
-            (= (:key screen) (key-code :t))
-            (prn (:ticks screen))
+            (= (:key screen) (key-code :d))
+            (do
+              (update! screen :debug (not debug))
+              entities)
             (= (:key screen) (key-code :g))
             (let [gunship (first (filter #(:gunship? %) entities))]
               (clojure.pprint/pprint gunship)))
@@ -211,8 +214,12 @@
       (cond (= (:key screen) (key-code :p))
             (do
               (update! screen :game-state :in-game)
-              entities))
-      entities))
+              entities)
+            (= (:key screen) (key-code :d))
+            (do
+              (update! screen :debug (not debug))
+              entities))))
+      ;entities))
 
   :on-timer
   (fn [screen entities]
