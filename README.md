@@ -4,7 +4,7 @@
 
 Click on the image to see the latest video showing a basic track rendering.
 
-[![Recent Video](https://img.youtube.com/vi/aaYTu9KVmBg/hqdefault.jpg)](https://www.youtube.com/watch?v=aaYTu9KVmBg)
+[![Recent Video](https://img.youtube.com/vi/_bhzefTjUhQ/hqdefault.jpg)](https://www.youtube.com/watch?v=_bhzefTjUhQ)
 
 ## Features
 
