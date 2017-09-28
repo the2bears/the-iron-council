@@ -6,6 +6,7 @@
             [the-iron-council.common :as c]
             [the-iron-council.debug-renderer :as debugger]
             [the-iron-council.enemy :as enemy]
+            [the-iron-council.enemy-bullet :as eb]
             [the-iron-council.explosion :as exp]
             [the-iron-council.gunship :refer :all :as gs]
             [the-iron-council.snow :as snow]
@@ -133,13 +134,13 @@
                       (body-position! (- (* 2 c/oob-padding)) (- c/oob-padding) 0))
           right-oob (doto
                        (create-oob-entity! screen c/oob-padding c/oob-y-length)
-                      (body-position! (+ c/game-width-adj c/oob-padding) (- c/oob-padding) 0))
-          snow (snow/create-snow)]
+                      (body-position! (+ c/game-width-adj c/oob-padding) (- c/oob-padding) 0))]
+          ;snow (snow/create-snow)]
       [(assoc top-oob :id :top-oob :oob? true :render-layer 0)
        (assoc bottom-oob :id :bottom-oob :oob? true :render-layer 0)
        (assoc left-oob :id :left-oob :oob? true :render-layer 0)
-       (assoc right-oob :id :right-oob :oob? true :render-layer 0)
-       snow]))
+       (assoc right-oob :id :right-oob :oob? true :render-layer 0)]))
+       ;snow]))
 
   :on-render
   (fn [{:keys [debug] :as screen} entities]
@@ -148,7 +149,7 @@
           camera (:camera screen)
           ticks (:ticks screen)
           game-state (:game-state screen)]
-      (clear! 1 1 1 1) ;0.1 0.1 0.12 1
+      (clear! 0.1 0.1 0.12 1)
       (cond (not= :paused game-state)
             (do
               ;(Thread/sleep 50)
@@ -209,7 +210,10 @@
               entities)
             (= (:key screen) (key-code :g))
             (let [gunship (first (filter #(:gunship? %) entities))]
-              (clojure.pprint/pprint gunship)))
+              (clojure.pprint/pprint gunship))
+            (= (:key screen) (key-code :h))
+            (let [eb (eb/fire-cannon! screen 50 50 0)]
+              (conj entities eb)))
       :paused
       (cond (= (:key screen) (key-code :p))
             (do
