@@ -11,14 +11,18 @@
                    [(color 1.0 0.5 1.0 1) [2 1 4 6 1 2 6 4]]
                    [(color :white) [3 1 2 6 2 2 4 4 1 3 6 2]]])
 (def bullet-speed (c/screen-to-world 0.1))
+(def bullet-speed2 (c/screen-to-world 0.3))
 
 (defn- simple-movement
-  ([velocity]
-   (simple-movement (core/x velocity) (core/y velocity)))
-  ([dx dy]
-   (fn [{:keys [x y] :as bullet}]
-      (assoc bullet :x (+ x dx)
-                    :y (+ y dy)))))
+  ([velocity min-ticks max-ticks]
+   (simple-movement (core/x velocity) (core/y velocity) min-ticks max-ticks))
+  ([dx dy min-ticks max-ticks]
+   (fn [{:keys [x y ticks] :or {ticks 0} :as bullet}]
+     (when (<= min-ticks ticks max-ticks)
+       (assoc bullet
+              :x (+ x dx)
+              :y (+ y dy)
+              :ticks (inc ticks))))))
 
 (defn- create-bullet-texture []
   (let [pix-map (pixmap* 8 8 (pixmap-format :r-g-b-a8888))]
@@ -30,11 +34,14 @@
 (defn fire-cannon!
   [screen x y a]
   (let [bullet-velocity-vector (vector-2 0 bullet-speed :rotate a)
+        bullet-velocity-vector2 (vector-2 0 bullet-speed2 :rotate a)
         bullet (cond (nil? @bullet-texture)
                      (do
                        (reset! bullet-texture (create-bullet-texture))
                        @bullet-texture)
-                     :else @bullet-texture)]
+                     :else @bullet-texture)
+        bhf-1 (simple-movement bullet-velocity-vector 0 180)
+        bhf-2 (simple-movement bullet-velocity-vector2 180 Integer/MAX_VALUE)]
     (assoc bullet
            :enemy-bullet? true
            :render-layer 60
@@ -45,7 +52,7 @@
            :height (c/screen-to-world 8)
            :translate-x (- (c/screen-to-world 4))
            :translate-y (- (c/screen-to-world 4))
-           :bullet-hell-fn (simple-movement bullet-velocity-vector))))
+           :bullet-hell-fn (some-fn bhf-1 bhf-2))))
 
 (defn handle-bullet [screen {:keys [bullet-hell-fn] :as entity}]
   (let [move-fn bullet-hell-fn]
