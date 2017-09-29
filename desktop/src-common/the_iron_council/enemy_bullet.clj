@@ -12,11 +12,13 @@
                    [(color :white) [3 1 2 6 2 2 4 4 1 3 6 2]]])
 (def bullet-speed (c/screen-to-world 0.1))
 
-(defn- simple-movement [{:keys [x y velocity] :as bullet}]
-  (let [dx (core/x velocity)
-        dy (core/y velocity)]
-    (assoc bullet :x (+ x dx)
-                  :y (+ y dy))))
+(defn- simple-movement
+  ([velocity]
+   (simple-movement (core/x velocity) (core/y velocity)))
+  ([dx dy]
+   (fn [{:keys [x y] :as bullet}]
+      (assoc bullet :x (+ x dx)
+                    :y (+ y dy)))))
 
 (defn- create-bullet-texture []
   (let [pix-map (pixmap* 8 8 (pixmap-format :r-g-b-a8888))]
@@ -39,12 +41,11 @@
            :x (c/screen-to-world x)
            :y (c/screen-to-world y)
            :angle a
-           :velocity bullet-velocity-vector
            :width (c/screen-to-world 8)
            :height (c/screen-to-world 8)
            :translate-x (- (c/screen-to-world 4))
            :translate-y (- (c/screen-to-world 4))
-           :bullet-hell-fn simple-movement)))
+           :bullet-hell-fn (simple-movement bullet-velocity-vector))))
 
 (defn handle-bullet [screen {:keys [bullet-hell-fn] :as entity}]
   (let [move-fn bullet-hell-fn]
