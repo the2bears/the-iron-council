@@ -190,7 +190,10 @@
             (= (:key screen) (key-code :o))
             (do
               (update! screen :option-type (if (= option-type :gatling) :rocket :gatling))
-              entities))
+              entities)
+            (= (:key screen) (key-code :h))
+            (let [eb (eb/test-bullet! screen 50 50 0)]
+              (conj entities eb)))
       :in-game
       (cond (= (:key screen) (key-code :p))
             (do
@@ -211,10 +214,7 @@
               entities)
             (= (:key screen) (key-code :g))
             (let [gunship (first (filter #(:gunship? %) entities))]
-              (clojure.pprint/pprint gunship))
-            (= (:key screen) (key-code :h))
-            (let [eb (eb/fire-cannon! screen 50 50 0)]
-              (conj entities eb)))
+              (clojure.pprint/pprint gunship)))
       :paused
       (cond (= (:key screen) (key-code :p))
             (do

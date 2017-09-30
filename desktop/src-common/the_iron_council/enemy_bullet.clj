@@ -2,6 +2,7 @@
   (:require [play-clj.core :refer [color pixmap! pixmap* pixmap-format shape x y] :as core]
             [play-clj.g2d :refer [texture]]
             [play-clj.math :refer [circle circle! polygon polygon! vector-2]]
+            [the-iron-council.bullet-hell :as bh]
             [the-iron-council.common :as c]
             [the-iron-council.utils :as utils]))
 
@@ -11,7 +12,7 @@
                    [(color 1.0 0.5 1.0 1) [2 1 4 6 1 2 6 4]]
                    [(color :white) [3 1 2 6 2 2 4 4 1 3 6 2]]])
 (def bullet-speed (c/screen-to-world 0.1))
-(def bullet-speed2 (c/screen-to-world 0.3))
+(def bullet-speed2 (c/screen-to-world 1))
 
 (defn- simple-movement
   ([velocity min-ticks max-ticks]
@@ -31,7 +32,7 @@
         (utils/pix-map-rect pix-map (first color-set) x y w h)))
     (texture pix-map :set-region 0 0 8 8)))
 
-(defn fire-cannon!
+(defn test-bullet!
   [screen x y a]
   (let [bullet-velocity-vector (vector-2 0 bullet-speed :rotate a)
         bullet-velocity-vector2 (vector-2 0 bullet-speed2 :rotate a)
@@ -40,8 +41,22 @@
                        (reset! bullet-texture (create-bullet-texture))
                        @bullet-texture)
                      :else @bullet-texture)
-        bhf-1 (simple-movement bullet-velocity-vector 0 180)
-        bhf-2 (simple-movement bullet-velocity-vector2 180 Integer/MAX_VALUE)]
+        change-speed0 (bh/change-speed
+                       :tx 0 ;(core/x bullet-velocity-vector2)
+                       :sy bullet-speed ;(core/y bullet-velocity-vector2)
+                       :ty 0
+                       :min-ticks 0
+                       :max-ticks 240)
+        wait (bh/wait :max-ticks 300)
+        change-speed (bh/change-speed
+                      :tx 0 ;(core/x bullet-velocity-vector2)
+                      :ty bullet-speed2 ;(core/y bullet-velocity-vector2)
+                      :min-ticks 300
+                      :max-ticks 420)
+        bhf-2 (bh/linear-movement
+               :dx (core/x bullet-velocity-vector2)
+               :dy (core/y bullet-velocity-vector2)
+               :min-ticks 420)]
     (assoc bullet
            :enemy-bullet? true
            :render-layer 60
@@ -52,7 +67,7 @@
            :height (c/screen-to-world 8)
            :translate-x (- (c/screen-to-world 4))
            :translate-y (- (c/screen-to-world 4))
-           :bullet-hell-fn (some-fn bhf-1 bhf-2))))
+           :bullet-hell-fn (some-fn change-speed0 wait change-speed bhf-2))))
 
 (defn handle-bullet [screen {:keys [bullet-hell-fn] :as entity}]
   (let [move-fn bullet-hell-fn]
