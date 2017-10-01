@@ -43,6 +43,22 @@
                :dy dy
                :ticks (inc ticks))))))
 
+(defn rotate
+  [& {:keys [da min-ticks max-ticks]
+      :or {min-ticks 0 max-ticks Integer/MAX_VALUE}}]
+  (let [term (- max-ticks min-ticks)]
+    (fn [{:keys [x y dx dy ticks] :or {ticks 0} :as bullet}]
+      (when (within-ticks? min-ticks ticks max-ticks)
+        (let [v (vector-2! (vector-2 dx dy) :rotate da)
+              dx (core/x v)
+              dy (core/y v)]
+          (assoc bullet
+                 :x (+ x dx)
+                 :y (+ y dy)
+                 :dx dx
+                 :dy dy
+                 :ticks (inc ticks)))))))
+
 (defn change-direction
   "Changes the bullets direction, to the target angle, in n terms. Up is 90, right is 0."
   [& {:keys [sx sy ta min-ticks max-ticks]
