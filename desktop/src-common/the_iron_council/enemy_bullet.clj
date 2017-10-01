@@ -11,7 +11,7 @@
 (def bullet-rects [[(color 1.0 0 1.0 1) [2 0 4 8 1 1 6 6 0 2 8 4]]
                    [(color 1.0 0.5 1.0 1) [2 1 4 6 1 2 6 4]]
                    [(color :white) [3 1 2 6 2 2 4 4 1 3 6 2]]])
-(def bullet-speed (c/screen-to-world 0.4))
+(def bullet-speed (c/screen-to-world 0.2))
 (def bullet-speed2 (c/screen-to-world 1))
 
 (defn- simple-movement
@@ -71,11 +71,14 @@
                  :dx 0
                  :dy 0
                  :max-ticks 120)
-        accel1 (bh/accel
-                :ax 0.0
-                :ay 0.005
-                :min-ticks 120
-                :max-ticks 780)]
+        linear4 (bh/linear-movement
+                 :dx 0.0
+                 :dy bullet-speed
+                 :max-ticks 121)
+        rotate1 (bh/rotate
+                 :da -0.15
+                 :min-ticks 121
+                 :max-ticks 3600)]
     (assoc bullet
            :enemy-bullet? true
            :render-layer 60
@@ -86,8 +89,12 @@
            :height (c/screen-to-world 8)
            :translate-x (- (c/screen-to-world 4))
            :translate-y (- (c/screen-to-world 4))
-           :bullet-hell-fn (some-fn linear3 accel1)))) ;linear1 turn1 wait2)))) ; change-speed0 wait change-speed bhf-2))))
+           :collider (circle (c/screen-to-world x) (c/screen-to-world y) (c/screen-to-world 3))
+           :collider-type :circle
+           :bullet-hell-fn (some-fn linear3 linear4 rotate1)))) ;linear1 turn1 wait2)))) ; change-speed0 wait change-speed bhf-2))))
 
 (defn handle-bullet [screen {:keys [bullet-hell-fn] :as entity}]
   (let [move-fn bullet-hell-fn]
-    (move-fn entity)))
+    (if-let [{:keys [x y collider] :as bullet} (move-fn entity)]
+      (do (circle! collider :set-position x y)
+          bullet))))
