@@ -36,22 +36,35 @@
 
 (defn- compute-collision [bullet {:keys [collider-type] :as enemy}]
   (case collider-type
-        :poly
-        (let [overlaps? (intersector! :overlap-convex-polygons (:collider bullet) (:collider enemy))]
-          (when overlaps?
-            {:bullet bullet :enemy enemy :at (:collider enemy)}))
-        :multi
-        (for [e (:collider enemy)]
-          (compute-collision bullet e))
-        false))
+    :circle
+    (let [collision? (intersector! :overlaps (:collider bullet) (:collider enemy))]
+      (when collision?
+        {:bullet bullet :enemy enemy :at (:collider enemy)}))
+    :poly
+    (let [overlaps? (intersector! :overlap-convex-polygons (:collider bullet) (:collider enemy))]
+      (when overlaps?
+        {:bullet bullet :enemy enemy :at (:collider enemy)}))
+    :multi
+    (for [e (:collider enemy)]
+      (compute-collision bullet e))
+    false))
 
 (defn compute-collisions [{:keys [ticks] :as screen} entities]
   (let [bullets (filter :bullet? entities)
         enemies (filter :enemy? entities)
+        enemy-bullets (filter :enemy-bullet? entities)
+        gunship (filter :gunship? entities)
+        collisions-with-gunship (if (empty? gunship)
+                                  []
+                                  (for [enemy-bullet enemy-bullets]
+                                    (if-some [collision (compute-collision enemy-bullet (first gunship))]
+                                      collision)))
         collisions (for [bullet bullets
                          enemy enemies]
                       (if-some [collision (compute-collision bullet enemy)]
                         collision))]
     (when (not (empty? collisions))
-      (update! screen :collisions (flatten collisions))))
-  entities)
+      (update! screen :collisions (flatten collisions)))
+    (if (first collisions-with-gunship)
+      (remove :gunship? entities)
+      entities)))
