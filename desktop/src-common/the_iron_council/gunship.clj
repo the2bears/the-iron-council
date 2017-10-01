@@ -4,7 +4,6 @@
             [the-iron-council.common :as c]
             [play-clj.core :refer [add-timer! bundle shape color key-pressed? pixmap! pixmap* pixmap-format screen! update! x y]]
             [play-clj.g2d :refer [texture]]
-            [play-clj.g2d-physics :refer :all]
             [play-clj.math :refer [vector-2 vector-2!]]))
 
 (def p-per-r 1)
@@ -69,16 +68,6 @@
     (doseq [pixel pixel-map-list] (draw-rect-pixelmap pix-map pixel))
     (assoc (texture pix-map) :seed seed)))
 
-(defn- create-ship-body!
-  [screen]
-  (let [body (add-body! screen (body-def :dynamic))
-        ship-shape (polygon-shape :set-as-box (c/screen-to-world c/ship-b2d-width) (c/screen-to-world c/ship-b2d-height) (vector-2 0 0) 0)]
-    (->> ship-shape
-         (fixture-def :density 1 :friction 0 :restitution 1 :shape)
-         (body! body :create-fixture))
-    (.dispose ship-shape)
-    body))
-
 (defn create-ship-entity!
   ([{:keys [option-type] :as screen}]
    (let [pixel-ship (-> (create-pixel-ship-texture Long/MAX_VALUE c/gunship-model c/gunship-color-scheme)
@@ -96,16 +85,13 @@
                                             :width (c/screen-to-world 8)
                                             :height (c/screen-to-world 16))
          ship-bundle (bundle pixel-ship left-option right-option)]
-     (doto (assoc ship-bundle
-             :body (create-ship-body! screen)
-             :id :gunship
-             :gunship? true
-             :render-layer 90
-             :x (c/screen-to-world (/ c/game-width 2))
-             :y c/ship-y-start
-             :angle 0)
-       (body-position! (c/screen-to-world (/ c/game-width 2)) c/ship-y-start 0)
-       (body! :set-linear-velocity 0 0)))))
+     (assoc ship-bundle
+            :id :gunship
+            :gunship? true
+            :render-layer 90
+            :x (c/screen-to-world (/ c/game-width 2))
+            :y c/ship-y-start
+            :angle 0))))
 
 (defn- angle-reset [angle]
   (let [ccw? (< angle 0)
@@ -113,10 +99,6 @@
         yaw-reset-amt (if ccw? (if (< (- angle) c/yaw-reset-amt) (- angle) c/yaw-reset-amt)
                           (if (< angle c/yaw-reset-amt) angle c/yaw-reset-amt))]
     (if (c/cannon-key-pressed?) angle (yaw-reset-fn angle yaw-reset-amt))))
-
-(defn- angle-reset-body [{:keys [:x :y :angle] :as entity}]
-  (body-position! entity x y (angle-reset angle))
-  entity)
 
 (defn- just-a [a b]
   a)
@@ -157,8 +139,7 @@
                            :right (if (> angle-anchored c/yaw-delta-max) c/yaw-delta-max angle-anchored)
                            :left (if (< angle-anchored (- c/yaw-delta-max)) (- c/yaw-delta-max) angle-anchored)
                            :none (angle-reset angle-anchored)))]
-    (body-position! entity x-anchored y-anchored angle-anchored)
-    entity))
+    (assoc entity :x x-anchored :y y-anchored :angle angle-anchored)))
 
 (defn move-player-tick [screen entities {:keys [:x :y :angle] :as entity}]
   (let [x-move?  (or (key-pressed? :dpad-right) (key-pressed? :dpad-left))
@@ -179,5 +160,5 @@
                 :down
                 :else :none)]
     (if (or x-move? y-move?)
-        (move entity x-dir x-delta y-dir y-delta)
-        (angle-reset-body entity))))
+      (move entity x-dir x-delta y-dir y-delta)
+      (assoc entity :angle (angle-reset angle)))))
