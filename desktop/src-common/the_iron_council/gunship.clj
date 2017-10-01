@@ -4,7 +4,7 @@
             [the-iron-council.common :as c]
             [play-clj.core :refer [add-timer! bundle shape color key-pressed? pixmap! pixmap* pixmap-format screen! update! x y]]
             [play-clj.g2d :refer [texture]]
-            [play-clj.math :refer [vector-2 vector-2!]]))
+            [play-clj.math :refer [circle circle! vector-2 vector-2!]]))
 
 (def p-per-r 1)
 
@@ -84,14 +84,20 @@
                                             :translate-y (- (c/screen-to-world c/ship-option-yoffset))
                                             :width (c/screen-to-world 8)
                                             :height (c/screen-to-world 16))
-         ship-bundle (bundle pixel-ship left-option right-option)]
+         ship-bundle (bundle pixel-ship left-option right-option)
+         x (c/screen-to-world (/ c/game-width 2))
+         y c/ship-y-start]
+
      (assoc ship-bundle
             :id :gunship
             :gunship? true
             :render-layer 90
-            :x (c/screen-to-world (/ c/game-width 2))
-            :y c/ship-y-start
-            :angle 0))))
+            :x x
+            :y y
+            :angle 0
+            :collider (circle x y (c/screen-to-world 3))
+            :collider-type :circle))))
+
 
 (defn- angle-reset [angle]
   (let [ccw? (< angle 0)
@@ -103,7 +109,7 @@
 (defn- just-a [a b]
   a)
 
-(defn- move [{:keys [:x :y :angle] :as entity} x-dir x-delta y-dir y-delta]
+(defn- move [{:keys [x y angle collider] :as entity} x-dir x-delta y-dir y-delta]
   (let [x-mv-fn (case x-dir
                   :right +
                   :left -
@@ -139,6 +145,7 @@
                            :right (if (> angle-anchored c/yaw-delta-max) c/yaw-delta-max angle-anchored)
                            :left (if (< angle-anchored (- c/yaw-delta-max)) (- c/yaw-delta-max) angle-anchored)
                            :none (angle-reset angle-anchored)))]
+    (circle! collider :set-position x-anchored y-anchored)
     (assoc entity :x x-anchored :y y-anchored :angle angle-anchored)))
 
 (defn move-player-tick [screen entities {:keys [:x :y :angle] :as entity}]
