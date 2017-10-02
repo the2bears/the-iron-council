@@ -14,6 +14,15 @@
 (def bullet-speed (c/screen-to-world 0.2))
 (def bullet-speed2 (c/screen-to-world 1))
 
+(def upper-edge (+ c/game-height-adj c/oob-padding))
+(def lower-edge (- c/oob-padding))
+(def right-edge (+ c/game-width-adj c/oob-padding))
+(def left-edge (- c/oob-padding))
+
+(defn- in-bounds [{:keys [x y] :as bullet}]
+  (and (< left-edge x right-edge)
+       (< lower-edge y upper-edge)))
+
 (defn- simple-movement
   ([velocity min-ticks max-ticks]
    (simple-movement (core/x velocity) (core/y velocity) min-ticks max-ticks))
@@ -50,9 +59,9 @@
         wait (bh/continue :max-ticks 300)
         change-speed (bh/change-speed
                       :tx 0 ;(core/x bullet-velocity-vector2)
-                      :ty bullet-speed2 ;(core/y bullet-velocity-vector2)
+                      :ty (* 4 bullet-speed2) ;(core/y bullet-velocity-vector2)
                       :min-ticks 300
-                      :max-ticks 420)
+                      :max-ticks 360)
         bhf-2 (bh/linear-movement
                :dx (core/x bullet-velocity-vector2)
                :dy (core/y bullet-velocity-vector2)
@@ -63,10 +72,10 @@
         turn1 (bh/change-direction
                :sx 0
                :sy bullet-speed
-               :ta 45
+               :ta 135
                :min-ticks 120
                :max-ticks 360)
-        wait2 (bh/continue :max-ticks 720)
+        wait2 (bh/continue :max-ticks 1720)
         linear3 (bh/linear-movement
                  :dx 0
                  :dy 0
@@ -91,10 +100,13 @@
            :translate-y (- (c/screen-to-world 4))
            :collider (circle (c/screen-to-world x) (c/screen-to-world y) (c/screen-to-world 3))
            :collider-type :circle
-           :bullet-hell-fn (some-fn linear3 linear4 rotate1)))) ;linear1 turn1 wait2)))) ; change-speed0 wait change-speed bhf-2))))
+           :bullet-hell-fn ;(some-fn linear3 linear4 rotate1 wait2))))
+              (some-fn linear1 turn1 wait2))))
+              ;(some-fn change-speed0 wait change-speed wait2))))
 
 (defn handle-bullet [screen {:keys [bullet-hell-fn] :as entity}]
   (let [move-fn bullet-hell-fn]
     (if-let [{:keys [x y collider] :as bullet} (move-fn entity)]
       (do (circle! collider :set-position x y)
-          bullet))))
+          (when (in-bounds bullet)
+            bullet)))))

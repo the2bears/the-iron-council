@@ -74,9 +74,7 @@
 (def ^:const refresh-gatling 0.08)
 (def ^:const refresh-rocket 0.6)
 
-(def ^:const oob-padding (screen-to-world 30))
-(def ^:const oob-x-length (+ game-width-adj (* 2 oob-padding)))
-(def ^:const oob-y-length (+ game-height-adj (* 2 oob-padding)))
+(def ^:const oob-padding (screen-to-world 10))
 
 (def ^:const cannon-key :x)
 (defn cannon-key-pressed? []
