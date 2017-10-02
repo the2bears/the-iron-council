@@ -1,7 +1,7 @@
 (ns the-iron-council.collision
   (:require [play-clj.core :refer [update!]]
-            [play-clj.math :refer [circle circle! intersector! polygon polygon! rectangle rectangle! vector-2 vector-2!]]))
-
+            [play-clj.math :refer [circle circle! intersector! polygon polygon! rectangle rectangle! vector-2 vector-2!]]
+            [the-iron-council.explosion :as exp]))
 
 (defmethod clojure.core/print-method com.badlogic.gdx.math.Polygon
   [p w]
@@ -66,5 +66,5 @@
     (when (not (empty? collisions))
       (update! screen :collisions (flatten collisions)))
     (if (first collisions-with-gunship)
-      (remove :gunship? entities)
+      (conj (remove :gunship? entities) (exp/create-explosion (:x (first gunship)) (:y (first gunship))))
       entities)))
