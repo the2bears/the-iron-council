@@ -9,6 +9,7 @@
             [the-iron-council.enemy-bullet :as eb]
             [the-iron-council.explosion :as exp]
             [the-iron-council.gunship :refer :all :as gs]
+            [the-iron-council.hud :as hud]
             [the-iron-council.snow :as snow]
             [the-iron-council.track :refer [create-curved-track create-track-entity] :as tr])
   (:import [com.badlogic.gdx.graphics.g2d Batch BitmapFont]
@@ -90,7 +91,14 @@
         entities)
       :else entities)
     entities))
-  
+
+(defn- check-game-status [screen entities]
+  ;(screen! hud/hud-screen :on-update-lives :p1-lives lives)
+  ;(screen! hud/hud-screen :on-update-score :p1-score (:p1-level-score screen) :high-score high-score)
+  (screen! hud/hud-screen :on-update-game-state :game-state (:game-state screen))
+  entities)
+
+
 (defscreen main-screen
   :on-show
   (fn [screen entities]
@@ -116,13 +124,7 @@
           ticks (:ticks screen)
           game-state (:game-state screen)]
       (clear! 0.1 0.1 0.12 1)
-      (cond (= :attract-mode game-state)
-            (let [renderer (:renderer screen)
-                  ^Batch batch (.getBatch renderer)
-                  arcade-fnt (:font screen)]
-              (render! screen entities)
-              entities)
-            (= :in-game game-state)
+      (cond (not (= :paused game-state))
             (do
               ;(Thread/sleep 50)
               (update! screen :ticks (inc (:ticks screen)))
@@ -135,15 +137,17 @@
                          ;(enemy-test screen)
                          (collision/compute-collisions screen);collisions detected
                          (handle-collisions screen);collisions handled
+                         (check-game-status screen)
                          (sort-by :render-layer)
                          (render! screen))]
                 (if debug
                   (debugger/render screen entities))
                 entities))
-            (= :paused game-state)
+            :else
             (let [entities
                   (->> entities
-                           (render! screen))]
+                       (check-game-status screen)
+                       (render! screen))]
                (if debug
                  (debugger/render screen entities))
                entities))))
@@ -209,7 +213,7 @@
 (defgame the-iron-council-game
   :on-create
   (fn [this]
-    (set-screen! this main-screen)
+    (set-screen! this main-screen hud/hud-screen)
     (graphics! :set-v-sync true)))
 
 (-> main-screen :entities deref)
