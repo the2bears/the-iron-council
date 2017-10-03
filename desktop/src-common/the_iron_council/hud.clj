@@ -1,10 +1,9 @@
 (ns the-iron-council.hud
   (:require [play-clj.core :refer [add-timer! clear! color defscreen game orthographic render! screen! stage update!]]
-            [play-clj.g2d :refer [bitmap-font bitmap-font! texture]])
-;            [the-iron-council.common :as c])
+            [play-clj.g2d :refer [bitmap-font bitmap-font! texture]]
+            [the-iron-council.common :as c]
+            [the-iron-council.gunship :as gs])
   (:import [com.badlogic.gdx.graphics.g2d Batch BitmapFont]))
-
-(declare add-mini-ships count-mini-ships pad-score)
 
 (def ^:const y-padding 4.0)
 (def score-digits 8)
@@ -20,6 +19,27 @@
 (def ^:const game-paused-y 420.0)
 (def ^:const high-score-label-x (/ 472.0 2.0)) ;(* 3 224)
 (def ^:const high-score-x (/ 472.0 2.0))
+
+(defn- add-mini-ships [n entities]
+  (let [ships (for [ship (range n)
+                    :let [x (- 600 (* ship 16))]]
+                (assoc (gs/create-pixel-ship-texture Long/MAX_VALUE c/gunship-model c/gunship-color-scheme)
+                       :width 16 :height 32
+                       :x x :y 5
+                       :id :pixel-ship :mini-ship? true))]
+    (flatten (conj entities ships))))
+
+(defn- count-mini-ships [screen entities]
+  (let [actual-count (count (filter #(:mini-ship? %) entities))
+        expected-count (- (:p1-lives screen) 1)]
+    (cond (and (> expected-count -1) (not= expected-count actual-count))
+          (->> entities
+               (add-mini-ships expected-count))
+          :else entities)))
+
+(defn- pad-score [score]
+  (let [padding (- score-digits (count (str score)))]
+    (str (apply str (repeat padding " ")) score)))
 
 (defscreen hud-screen
   :on-show
@@ -65,17 +85,14 @@
               (bitmap-font! ^BitmapFont arcade-fnt :draw batch "PAUSED" game-paused-x game-paused-y)))
       (.end batch)
       (->> entities
-           ;(count-mini-ships screen)
+           (count-mini-ships screen)
            (render! screen))))
 
-                                        ;Called by the main_screen, passing in :score
   :on-update-score
   (fn [screen entities]
     (let [score (:p1-score screen)
           high-score (:high-score screen)]
       (update! screen :p1-score score :high-score high-score))
-                                        ;(prn :score score)
-    
     nil)
 
   :on-update-lives
@@ -98,7 +115,3 @@
   (fn [screen entities]
     (let [value (:p1-bonus screen)]
       (update! screen :p1-bonus value))))
-
-(defn pad-score [score]
-  (let [padding (- score-digits (count (str score)))]
-    (str (apply str (repeat padding " ")) score)))

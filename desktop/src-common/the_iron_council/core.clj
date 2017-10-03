@@ -8,7 +8,8 @@
             [the-iron-council.enemy :as enemy]
             [the-iron-council.enemy-bullet :as eb]
             [the-iron-council.explosion :as exp]
-            [the-iron-council.gunship :refer :all :as gs]
+            [the-iron-council.fps :as fps]
+            [the-iron-council.gunship :refer :all :as gs]            
             [the-iron-council.hud :as hud]
             [the-iron-council.snow :as snow]
             [the-iron-council.track :refer [create-curved-track create-track-entity] :as tr])
@@ -24,6 +25,7 @@
 (defn on-new-game [screen entities]
   (update! screen
            :game-state :in-game
+           :p1-lives 3
            :ticks 0)
   (tr/create-curved-track screen)
   (-> entities
@@ -93,10 +95,11 @@
     entities))
 
 (defn- check-game-status [screen entities]
-  ;(screen! hud/hud-screen :on-update-lives :p1-lives lives)
-  ;(screen! hud/hud-screen :on-update-score :p1-score (:p1-level-score screen) :high-score high-score)
-  (screen! hud/hud-screen :on-update-game-state :game-state (:game-state screen))
-  entities)
+  (let [lives (:p1-lives screen)]
+    ;(screen! hud/hud-screen :on-update-lives :p1-lives lives)
+    ;(screen! hud/hud-screen :on-update-score :p1-score (:p1-level-score screen) :high-score high-score)
+    ;(screen! hud/hud-screen :on-update-game-state :game-state (:game-state screen))
+    entities))
 
 
 (defscreen main-screen
@@ -108,6 +111,7 @@
                           :camera (orthographic :set-to-ortho false (c/screen-to-world c/game-width) (c/screen-to-world c/game-height))
                           :game-state :attract-mode
                           :ticks 0
+                          :p1-lives 0
                           :option-type :gatling
                           :fire-cannon-when-ready true
                           :fire-gatling-when-ready true
@@ -213,7 +217,7 @@
 (defgame the-iron-council-game
   :on-create
   (fn [this]
-    (set-screen! this main-screen hud/hud-screen)
+    (set-screen! this main-screen fps/fps-screen)
     (graphics! :set-v-sync true)))
 
 (-> main-screen :entities deref)
