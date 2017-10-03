@@ -1,5 +1,6 @@
 (ns the-iron-council.gunship
-  (:require [pixel-ships.core :as psc :refer :all]
+  (:require [clojure.pprint :as pprint]
+            [pixel-ships.core :as psc :refer :all]
             [pixel-ships.bollinger :as bollinger :refer :all]
             [the-iron-council.common :as c]
             [play-clj.core :refer [add-timer! bundle shape color key-pressed? pixmap! pixmap* pixmap-format screen! update! x y]]
@@ -78,16 +79,19 @@
                         (assoc :translate-x (- (c/screen-to-world c/ship-mp-xoffset))
                                :translate-y (- (c/screen-to-world c/ship-mp-yoffset))
                                :width (c/screen-to-world 16)
-                               :height (c/screen-to-world 32)))
+                               :height (c/screen-to-world 32)
+                               :hull? true))
          option-texture (if (= option-type :rocket) @rocket-option-texture @gatling-option-texture)
          left-option (assoc option-texture :translate-x (- (c/screen-to-world c/ship-option-xoffset-left))
                                            :translate-y (- (c/screen-to-world c/ship-option-yoffset))
                                            :width (c/screen-to-world 8)
-                                           :height (c/screen-to-world 16))
+                                           :height (c/screen-to-world 16)
+                                           :option? true)
          right-option (assoc option-texture :translate-x (+ (c/screen-to-world c/ship-option-xoffset-right))
                                             :translate-y (- (c/screen-to-world c/ship-option-yoffset))
                                             :width (c/screen-to-world 8)
-                                            :height (c/screen-to-world 16))
+                                            :height (c/screen-to-world 16)
+                                            :option? true)
          ship-bundle (bundle pixel-ship left-option right-option)
          x (c/screen-to-world (/ c/game-width 2))
          y c/ship-y-start]
@@ -173,6 +177,17 @@
     (if (or x-move? y-move?)
       (move entity x-dir x-delta y-dir y-delta)
       (assoc entity :angle (angle-reset angle)))))
+
+(defn update-options [{:keys [option-type] :as screen} entities]
+  (let [gunship (first (filter :gunship? entities))
+        not-gunship (remove :gunship? entities)
+        option-texture (if (= :rocket option-type) @rocket-option-texture @gatling-option-texture)
+        gunship-bundle (:entities gunship)
+        hull (first gunship-bundle)
+        options (->> (rest gunship-bundle)
+                     (map #(assoc % :object (:object option-texture))))
+        gunship-bundle (into [] (flatten (conj options hull)))]
+    (conj not-gunship (assoc gunship :entities gunship-bundle))))
 
 (defn create-textures []
   (do

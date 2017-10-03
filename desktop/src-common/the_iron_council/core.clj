@@ -117,7 +117,7 @@
                           :fire-gatling-when-ready true
                           :fire-rocket-when-ready true
                           :font (bitmap-font "arcade20.fnt")
-                          :debug true)]
+                          :debug false)]
           ;snow (snow/create-snow)]
       (gs/create-textures)
       (bullet/create-textures)
@@ -177,6 +177,11 @@
             (do
               (update! screen :game-state :paused)
               entities)
+            (= (:key screen) (key-code :o))
+            (do
+              (let [new-option-type (if (= option-type :gatling) :rocket :gatling)
+                    screen (update! screen :option-type new-option-type)]
+                (gs/update-options screen entities)))
             (= (:key screen) (key-code :x))
             (do
               (update! screen :fire-cannon-when-ready true)
