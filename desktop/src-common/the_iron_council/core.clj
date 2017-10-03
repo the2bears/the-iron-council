@@ -1,5 +1,6 @@
 (ns the-iron-council.core
   (:require [play-clj.core :refer :all]
+            [play-clj.g2d :refer [bitmap-font bitmap-font!]]
             [the-iron-council.bullet :as bullet]
             [the-iron-council.collision :as collision]
             [the-iron-council.common :as c]
@@ -10,7 +11,14 @@
             [the-iron-council.gunship :refer :all :as gs]
             [the-iron-council.snow :as snow]
             [the-iron-council.track :refer [create-curved-track create-track-entity] :as tr])
-  (:import [com.badlogic.gdx.graphics.glutils ShapeRenderer]))
+  (:import [com.badlogic.gdx.graphics.g2d Batch BitmapFont]
+           [com.badlogic.gdx.graphics.glutils ShapeRenderer]))
+
+
+(def ^:const logo-x (c/screen-to-world 126.0))
+(def ^:const logo-y (c/screen-to-world 500.0))
+(def ^:const game-over-x (c/screen-to-world 246.0))
+(def ^:const game-over-y (c/screen-to-world 420.0))
 
 (defn on-new-game [screen entities]
   (update! screen
@@ -96,6 +104,7 @@
                           :fire-cannon-when-ready true
                           :fire-gatling-when-ready true
                           :fire-rocket-when-ready true
+                          :font (bitmap-font "arcade20.fnt")
                           :debug true)]
           ;snow (snow/create-snow)]
       []))
@@ -107,7 +116,13 @@
           ticks (:ticks screen)
           game-state (:game-state screen)]
       (clear! 0.1 0.1 0.12 1)
-      (cond (not= :paused game-state)
+      (cond (= :attract-mode game-state)
+            (let [renderer (:renderer screen)
+                  ^Batch batch (.getBatch renderer)
+                  arcade-fnt (:font screen)]
+              (render! screen entities)
+              entities)
+            (= :in-game game-state)
             (do
               ;(Thread/sleep 50)
               (update! screen :ticks (inc (:ticks screen)))
@@ -125,7 +140,7 @@
                 (if debug
                   (debugger/render screen entities))
                 entities))
-            :else
+            (= :paused game-state)
             (let [entities
                   (->> entities
                            (render! screen))]
