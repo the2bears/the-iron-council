@@ -45,11 +45,6 @@
   [screen x y a]
   (let [bullet-velocity-vector (vector-2 0 bullet-speed :rotate a)
         bullet-velocity-vector2 (vector-2 0 bullet-speed2 :rotate a)
-        bullet (cond (nil? @bullet-texture)
-                     (do
-                       (reset! bullet-texture (create-bullet-texture))
-                       @bullet-texture)
-                     :else @bullet-texture)
         change-speed0 (bh/change-speed
                        :tx 0 ;(core/x bullet-velocity-vector2)
                        :sy bullet-speed ;(core/y bullet-velocity-vector2)
@@ -88,7 +83,7 @@
                  :da -0.15
                  :min-ticks 121
                  :max-ticks 3600)]
-    (assoc bullet
+    (assoc @bullet-texture
            :enemy-bullet? true
            :render-layer 60
            :x (c/screen-to-world x)
@@ -101,8 +96,12 @@
            :collider (circle (c/screen-to-world x) (c/screen-to-world y) (c/screen-to-world 3))
            :collider-type :circle
            :bullet-hell-fn ;(some-fn linear3 linear4 rotate1 wait2))))
-              (some-fn linear1 turn1 wait2))))
-              ;(some-fn change-speed0 wait change-speed wait2))))
+              ;(some-fn linear1 turn1 wait2))))
+              (some-fn change-speed0 wait change-speed wait2))))
+
+(defn create-textures []
+  (do
+    (reset! bullet-texture (create-bullet-texture))))
 
 (defn handle-bullet [screen {:keys [bullet-hell-fn] :as entity}]
   (let [move-fn bullet-hell-fn]

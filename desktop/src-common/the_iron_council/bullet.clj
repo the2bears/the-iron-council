@@ -22,11 +22,6 @@
   [screen x y a]
   (let [bullet-start-offset-vector (vector-2 c/bullet-half-width c/bullet-half-height :rotate a)
         cannon-velocity-vector (vector-2 0 c/bullet-speed :rotate a)
-        cannon-shell (cond (nil? @cannon-shell-texture)
-                       (do
-                         (reset! cannon-shell-texture (create-cannon-shell-texture))
-                         @cannon-shell-texture)
-                       :else @cannon-shell-texture)
         x (- x (core/x bullet-start-offset-vector))
         y (- y (core/y bullet-start-offset-vector))
         c-p-verts (float-array [x (+ y (- c/bullet-height c/bullet-width))
@@ -37,7 +32,7 @@
     (doto collider-poly
       (polygon! :set-origin x y)
       (polygon! :set-rotation a))
-    (assoc cannon-shell
+    (assoc @cannon-shell-texture
       :id (uuid)
       :bullet? true
       :render-layer 50
@@ -71,16 +66,6 @@
   (let [gatling-start-offset-vector-left (vector-2 (c/screen-to-world c/gatling-shell-xoffset-left) c/gatling-shell-half-height :rotate a)
         gatling-start-offset-vector-right (vector-2 (c/screen-to-world (- c/gatling-shell-xoffset-right)) c/gatling-shell-half-height :rotate a)
         gatling-velocity-vector (vector-2 0 c/gatling-shell-speed :rotate a)
-        gatling-shell-left (cond (nil? @gatling-shell-texture)
-                             (do
-                               (reset! gatling-shell-texture (create-gatling-shell-texture))
-                               @gatling-shell-texture)
-                             :else @gatling-shell-texture)
-        gatling-shell-right (cond (nil? @gatling-shell-texture)
-                              (do
-                                (reset! gatling-shell-texture (create-gatling-shell-texture))
-                                @gatling-shell-texture)
-                              :else @gatling-shell-texture)
         x-l (- x (core/x gatling-start-offset-vector-left))
         y-l (- y (core/y gatling-start-offset-vector-left))
         x-r (- x (core/x gatling-start-offset-vector-right))
@@ -93,7 +78,7 @@
     (doto collider-right-poly
       (polygon! :set-origin x-r y-r)
       (polygon! :set-rotation a))
-    [(assoc gatling-shell-left
+    [(assoc @gatling-shell-texture
        :id (uuid)
        :bullet? true
        :render-layer 50
@@ -108,7 +93,7 @@
        :c-y-offset (c/screen-to-world 6)
        :width c/gatling-shell-width
        :height c/gatling-shell-height)
-     (assoc gatling-shell-right
+     (assoc @gatling-shell-texture
        :id (uuid)
        :bullet? true
        :render-layer 50
@@ -142,16 +127,6 @@
   (let [rocket-start-offset-vector-left (vector-2 (c/screen-to-world c/rocket-xoffset-left) c/rocket-half-height :rotate a)
         rocket-start-offset-vector-right (vector-2 (c/screen-to-world (- c/rocket-xoffset-right)) c/rocket-half-height :rotate a)
         rocket-velocity-vector (vector-2 0 c/rocket-speed :rotate a)
-        rocket-left (cond (nil? @rocket-texture)
-                      (do
-                        (reset! rocket-texture (create-rocket-texture))
-                        @rocket-texture)
-                      :else @rocket-texture)
-        rocket-right (cond (nil? @rocket-texture)
-                       (do
-                         (reset! rocket-texture (create-rocket-texture))
-                         @rocket-texture)
-                       :else @rocket-texture)
         x-l (- x (core/x rocket-start-offset-vector-left))
         y-l (- y (core/y rocket-start-offset-vector-left))
         x-r (- x (core/x rocket-start-offset-vector-right))
@@ -165,7 +140,7 @@
     (doto collider-right-poly
       (polygon! :set-origin x-r y-r)
       (polygon! :set-rotation a))
-    [(assoc rocket-left
+    [(assoc @rocket-texture
        :id (uuid)
        :bullet? true
        :render-layer 50
@@ -180,7 +155,7 @@
        :c-y-offset (c/screen-to-world 3)
        :width c/rocket-width
        :height c/rocket-height)
-     (assoc rocket-right
+     (assoc @rocket-texture
        :id (uuid)
        :bullet? true
        :render-layer 50
@@ -195,6 +170,12 @@
        :c-y-offset (c/screen-to-world 3)
        :width c/rocket-width
        :height c/rocket-height)]))
+
+(defn create-textures []
+  (do
+    (reset! cannon-shell-texture (create-cannon-shell-texture))
+    (reset! rocket-texture (create-rocket-texture))
+    (reset! gatling-shell-texture (create-gatling-shell-texture))))
 
 (defn handle-collision [bullet other-entity screen entities]
   (cond ;(:oob? other-entity)

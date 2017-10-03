@@ -96,9 +96,9 @@
 
 (defn- check-game-status [screen entities]
   (let [lives (:p1-lives screen)]
-    ;(screen! hud/hud-screen :on-update-lives :p1-lives lives)
+    (screen! hud/hud-screen :on-update-lives :p1-lives lives)
     ;(screen! hud/hud-screen :on-update-score :p1-score (:p1-level-score screen) :high-score high-score)
-    ;(screen! hud/hud-screen :on-update-game-state :game-state (:game-state screen))
+    (screen! hud/hud-screen :on-update-game-state :game-state (:game-state screen))
     entities))
 
 
@@ -119,6 +119,8 @@
                           :font (bitmap-font "arcade20.fnt")
                           :debug true)]
           ;snow (snow/create-snow)]
+      (bullet/create-textures)
+      (eb/create-textures)
       []))
        ;snow]))
 
@@ -217,7 +219,7 @@
 (defgame the-iron-council-game
   :on-create
   (fn [this]
-    (set-screen! this main-screen fps/fps-screen)
+    (set-screen! this main-screen hud/hud-screen fps/fps-screen)
     (graphics! :set-v-sync true)))
 
 (-> main-screen :entities deref)

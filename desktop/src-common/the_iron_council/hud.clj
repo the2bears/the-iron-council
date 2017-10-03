@@ -20,10 +20,12 @@
 (def ^:const high-score-label-x (/ 472.0 2.0)) ;(* 3 224)
 (def ^:const high-score-x (/ 472.0 2.0))
 
+(def mini-ship-texture (atom nil))
+
 (defn- add-mini-ships [n entities]
   (let [ships (for [ship (range n)
                     :let [x (- 600 (* ship 16))]]
-                (assoc (gs/create-pixel-ship-texture Long/MAX_VALUE c/gunship-model c/gunship-color-scheme)
+                (assoc @mini-ship-texture
                        :width 16 :height 32
                        :x x :y 5
                        :id :pixel-ship :mini-ship? true))]
@@ -51,6 +53,7 @@
                           :high-score 0
                           :game-state :attract-mode
                           :font (bitmap-font "arcade20.fnt"))]
+      (reset! mini-ship-texture (gs/create-pixel-ship-texture Long/MAX_VALUE c/gunship-model c/gunship-color-scheme))
       entities))
 
   :on-render
