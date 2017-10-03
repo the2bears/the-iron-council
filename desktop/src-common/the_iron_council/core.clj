@@ -119,6 +119,7 @@
                           :font (bitmap-font "arcade20.fnt")
                           :debug true)]
           ;snow (snow/create-snow)]
+      (gs/create-textures)
       (bullet/create-textures)
       (eb/create-textures)
       []))

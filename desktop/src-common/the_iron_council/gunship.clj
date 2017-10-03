@@ -6,6 +6,10 @@
             [play-clj.g2d :refer [texture]]
             [play-clj.math :refer [circle circle! vector-2 vector-2!]]))
 
+(def gunship-texture (atom nil))
+(def gatling-option-texture (atom nil))
+(def rocket-option-texture (atom nil))
+
 (def p-per-r 1)
 
 (defn- hsv-to-rgb
@@ -70,12 +74,12 @@
 
 (defn create-ship-entity!
   ([{:keys [option-type] :as screen}]
-   (let [pixel-ship (-> (create-pixel-ship-texture Long/MAX_VALUE c/gunship-model c/gunship-color-scheme)
+   (let [pixel-ship (-> @gunship-texture
                         (assoc :translate-x (- (c/screen-to-world c/ship-mp-xoffset))
                                :translate-y (- (c/screen-to-world c/ship-mp-yoffset))
                                :width (c/screen-to-world 16)
                                :height (c/screen-to-world 32)))
-         option-texture (create-option-texture Long/MAX_VALUE (if (= option-type :rocket) c/rocket-model c/gatling-model) c/gunship-color-scheme)
+         option-texture (if (= option-type :rocket) @rocket-option-texture @gatling-option-texture)
          left-option (assoc option-texture :translate-x (- (c/screen-to-world c/ship-option-xoffset-left))
                                            :translate-y (- (c/screen-to-world c/ship-option-yoffset))
                                            :width (c/screen-to-world 8)
@@ -169,3 +173,9 @@
     (if (or x-move? y-move?)
       (move entity x-dir x-delta y-dir y-delta)
       (assoc entity :angle (angle-reset angle)))))
+
+(defn create-textures []
+  (do
+    (reset! gunship-texture (create-pixel-ship-texture Long/MAX_VALUE c/gunship-model c/gunship-color-scheme))
+    (reset! gatling-option-texture (create-option-texture Long/MAX_VALUE c/gatling-model c/gunship-color-scheme))
+    (reset! rocket-option-texture (create-option-texture Long/MAX_VALUE c/rocket-model c/gunship-color-scheme))))
