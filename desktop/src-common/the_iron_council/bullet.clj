@@ -9,8 +9,6 @@
 (def gatling-shell-texture (atom nil))
 (def rocket-texture (atom nil))
 
-(defn uuid [] (str (java.util.UUID/randomUUID)))
-
 (defn- create-cannon-shell-texture []
   (let [pix-map (pixmap* 8 16 (pixmap-format :r-g-b-a8888))]
     (doseq [color-set c/bullet-rects]
@@ -33,7 +31,7 @@
       (polygon! :set-origin x y)
       (polygon! :set-rotation a))
     (assoc @cannon-shell-texture
-      :id (uuid)
+      :id (c/uuid)
       :bullet? true
       :render-layer 50
       :ttl 120
@@ -79,7 +77,7 @@
       (polygon! :set-origin x-r y-r)
       (polygon! :set-rotation a))
     [(assoc @gatling-shell-texture
-       :id (uuid)
+       :id (c/uuid)
        :bullet? true
        :render-layer 50
        :ttl 100
@@ -94,7 +92,7 @@
        :width c/gatling-shell-width
        :height c/gatling-shell-height)
      (assoc @gatling-shell-texture
-       :id (uuid)
+       :id (c/uuid)
        :bullet? true
        :render-layer 50
        :ttl 100
@@ -141,7 +139,7 @@
       (polygon! :set-origin x-r y-r)
       (polygon! :set-rotation a))
     [(assoc @rocket-texture
-       :id (uuid)
+       :id (c/uuid)
        :bullet? true
        :render-layer 50
        :ttl 200
@@ -156,7 +154,7 @@
        :width c/rocket-width
        :height c/rocket-height)
      (assoc @rocket-texture
-       :id (uuid)
+       :id (c/uuid)
        :bullet? true
        :render-layer 50
        :ttl 200

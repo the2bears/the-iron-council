@@ -85,6 +85,7 @@
                  :max-ticks 3600)]
     (assoc @bullet-texture
            :enemy-bullet? true
+           :id (c/uuid)
            :render-layer 60
            :x (c/screen-to-world x)
            :y (c/screen-to-world y)
