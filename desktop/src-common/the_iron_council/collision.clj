@@ -59,12 +59,12 @@
                                   (for [enemy-bullet enemy-bullets]
                                     (if-some [collision (compute-collision enemy-bullet (first gunship))]
                                       collision)))
-        collisions (for [bullet bullets
-                         enemy enemies]
-                      (if-some [collision (compute-collision bullet enemy)]
-                        collision))]
+        collisions (remove nil? (flatten (for [bullet bullets
+                                               enemy enemies]
+                                            (if-some [collision (compute-collision bullet enemy)]
+                                              collision))))]
     (when (not (empty? collisions))
-      (update! screen :collisions (flatten collisions)))
+      (update! screen :collisions collisions))
     (if (first collisions-with-gunship)
       (conj (remove :gunship? entities) (exp/create-explosion (:x (first gunship)) (:y (first gunship))))
       entities)))
