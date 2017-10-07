@@ -1,5 +1,5 @@
 (ns the-iron-council.enemy
-  (:require [play-clj.core :refer [color pixmap! pixmap* pixmap-format shape update! x y] :as core]
+  (:require [play-clj.core :refer [bundle color pixmap! pixmap* pixmap-format shape update! x y] :as core]
             [play-clj.g2d :refer [texture]]
             [play-clj.math :refer [circle circle! polygon polygon! rectangle rectangle! vector-2]]
             [the-iron-council.common :as c]
@@ -14,6 +14,9 @@
 (def train-car-length-adj (c/screen-to-world train-car-length))
 (def train-car-width-offset (/ train-car-width-adj 2))
 (def train-car-length-offset (/ train-car-length-adj 2))
+(def indestructible-collider-width (c/screen-to-world 4))
+(def indestructible-collider-length train-car-length-adj)
+
 
 (def train-car-texture (atom nil))
 (def darkest (color :black))
@@ -42,6 +45,12 @@
       (train-bolt-strip pix-map 0 y 36 4))
     (texture pix-map :set-region 0 0 train-car-width train-car-length)))
 
+(def test-side 16)
+
+(defn- create-test-texture []
+  (let [pix-map (pixmap* 32 32 (pixmap-format :r-g-b-a8888))]
+    (utils/pix-map-rect pix-map (color :white) 0 0 test-side test-side)
+    (texture pix-map :set-region 0 0 test-side test-side)))
 
 (defn- update-collider
   "Create a polygon, with rotation around x,y (the cars center).
@@ -66,6 +75,32 @@
       :l len-offset
       :w width-offset
       :collider-type :poly})))
+
+(defn create-test
+ ([screen entities]
+  (let [a 30
+        train-car (-> (cond (nil? @train-car-texture)
+                            (do
+                              (reset! train-car-texture (create-train-car-texture))
+                              @train-car-texture)
+                            :else @train-car-texture)
+                      (assoc :width train-car-width-adj
+                             :height train-car-length-adj
+                             ;:translate-x (- train-car-width-offset)
+                             :translate-y (- train-car-length-offset)))
+        test-text (-> (create-test-texture)
+                      (assoc :angle (+ a 10)
+                             :width (c/screen-to-world test-side)
+                             :height (c/screen-to-world test-side)))
+                             ;:translate-x (/ (- (c/screen-to-world test-side)) 2)
+                             ;:translate-y (/ (- (c/screen-to-world test-side)) 2)))
+        test-bundle (bundle train-car test-text)]
+    (assoc test-bundle
+           :x (/ c/game-width-adj 2)
+           :y (/ c/game-height-adj 2)           
+           :angle a
+           :bundle-a a
+           :render-layer 5))))
 
 (defn create-train-car
  ([screen entities]
@@ -93,7 +128,15 @@
                           @train-car-texture)
                         :else @train-car-texture)
         car-collider (update-collider x y cx cy angle (/ train-car-width-offset 2) (/ train-car-length-offset 4))
-        car-collider2 (update-collider x y cx (- cy) angle (/ train-car-width-offset 2) (/ train-car-length-offset 4))]
+        car-collider2 (update-collider x y cx (- cy) angle (/ train-car-width-offset 2) (/ train-car-length-offset 4))
+        indestructible-guard (update-collider x
+                                              y
+                                              (- train-car-width-offset (/ indestructible-collider-width 2))
+                                              0
+                                              angle
+                                              (/ indestructible-collider-width 2)
+                                              (/ indestructible-collider-length 2))]
+                                              
     (assoc train-car
            :train? true
            :enemy? true
@@ -109,7 +152,7 @@
            :track track
            :track-id :main-line
            :i-point-index i-point-index
-           :collider [car-collider car-collider2]
+           :collider [car-collider car-collider2 indestructible-guard]
            :collider-type :multi))))
 
 (defn- next-track-entity [at-track tracks]

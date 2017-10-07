@@ -1,5 +1,6 @@
 (ns the-iron-council.core
-  (:require [play-clj.core :refer :all]
+  (:require [clojure.pprint :as pp]
+            [play-clj.core :refer :all]
             [play-clj.g2d :refer [bitmap-font bitmap-font!]]
             [the-iron-council.bullet :as bullet]
             [the-iron-council.collision :as collision]
@@ -49,6 +50,7 @@
     (if (empty? bullet-ids)
       entities
       (do
+        ;(pp/pprint collisions)        
         (update! screen :collisions [])
         (let [updated-entities (remove #(some? (bullet-ids (:id %))) entities)
               bullets (filter #(some? (bullet-ids (:id %))) entities)
@@ -163,47 +165,56 @@
   (fn [{:keys [debug option-type key] :as screen} entities]
     (case (:game-state screen)
       :attract-mode
-      (cond (= (:key screen) (key-code :num-1))
+      (cond (= key (key-code :num-1))
             (on-new-game screen entities)
-            (= (:key screen) (key-code :o))
+            (= key (key-code :o))
             (do
               (update! screen :option-type (if (= option-type :gatling) :rocket :gatling))
               entities)
-            (= (:key screen) (key-code :h))
+            (= key (key-code :h))
             (let [eb (eb/test-bullet! screen 50 50 0)]
-              (conj entities eb)))
+              (conj entities eb))
+            (= key (key-code :k))
+            (let [test-car (enemy/create-test screen entities)
+                  test-car (-> test-car
+                               (assoc :test? true))]
+              (conj entities test-car))
+            (= key (key-code :l))
+            (let [test-car (filter :test? entities)]
+              (pp/pprint test-car)
+              entities))
       :in-game
-      (cond (= (:key screen) (key-code :p))
+      (cond (= key (key-code :p))
             (do
               (update! screen :game-state :paused)
               entities)
-            (= (:key screen) (key-code :o))
+            (= key (key-code :o))
             (do
               (let [new-option-type (if (= option-type :gatling) :rocket :gatling)
                     screen (update! screen :option-type new-option-type)]
                 (gs/update-options screen entities)))
-            (= (:key screen) (key-code :x))
+            (= key (key-code :x))
             (do
               (update! screen :fire-cannon-when-ready true)
               (update! screen :fire-gatling-when-ready true)
               ;(update! screen :fire-rocket-when-ready true)
               entities)
-            (= (:key screen) (key-code :e))
+            (= key (key-code :e))
             (let [car (enemy/create-train-car screen entities)]
               (conj entities car))
-            (= (:key screen) (key-code :d))
+            (= key (key-code :d))
             (do
               (update! screen :debug (not debug))
               entities)
-            (= (:key screen) (key-code :g))
+            (= key (key-code :g))
             (let [gunship (first (filter #(:gunship? %) entities))]
               (clojure.pprint/pprint gunship)))
       :paused
-      (cond (= (:key screen) (key-code :p))
+      (cond (= key (key-code :p))
             (do
               (update! screen :game-state :in-game)
               entities)
-            (= (:key screen) (key-code :d))
+            (= key (key-code :d))
             (do
               (update! screen :debug (not debug))
               entities))))
