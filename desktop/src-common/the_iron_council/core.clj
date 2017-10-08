@@ -12,6 +12,7 @@
             [the-iron-council.fps :as fps]
             [the-iron-council.gunship :refer :all :as gs]            
             [the-iron-council.hud :as hud]
+            [the-iron-council.levels :as levels]
             [the-iron-council.snow :as snow]
             [the-iron-council.track :refer [create-curved-track create-track-entity] :as tr])
   (:import [com.badlogic.gdx.graphics.g2d Batch BitmapFont]
@@ -28,9 +29,10 @@
            :game-state :in-game
            :p1-lives 3
            :ticks 0)
-  (tr/create-curved-track screen)
-  (-> entities
-      (conj (gs/create-ship-entity! screen))))
+  (levels/level-one screen)
+  (->> entities
+       (gs/create-ship-entity! screen)))
+       ;(levels/start-level screen)))
   
 (defn handle-all-entities [screen entities]
   (->> entities
@@ -43,6 +45,7 @@
                     (:explosion? entity) (exp/handle-explosion entity)
                     (:train? entity) (enemy/move-train screen entities entity)
                     (:snow? entity) (snow/move-snow screen entity)
+                    (:test-bundle? entity) (enemy/handle-test-bundle screen entity)
                     :else entity)))))
 
 (defn handle-collisions [{:keys [collisions] :as screen} entities]
@@ -150,7 +153,9 @@
                          (sort-by :render-layer)
                          (render! screen))]
                 (if debug
-                  (debugger/render screen entities))
+                  (do
+                    (debugger/render screen entities)
+                    (debugger/render-way-points screen entities)))
                 entities))
             :else
             (let [entities
@@ -175,13 +180,17 @@
             (let [eb (eb/test-bullet! screen 50 50 0)]
               (conj entities eb))
             (= key (key-code :k))
-            (let [test-car (enemy/create-test screen entities)
-                  test-car (-> test-car
-                               (assoc :test? true))]
+            (let [test-car (enemy/create-test screen entities)]
+;                  test-car (-> test-car
+;                               (assoc :test? true))]
               (conj entities test-car))
             (= key (key-code :l))
-            (let [test-car (filter :test? entities)]
+            (let [test-car (filter :test-bundle? entities)]
               (pp/pprint test-car)
+              entities)
+            (= key (key-code :d))
+            (do
+              (update! screen :debug (not debug))
               entities))
       :in-game
       (cond (= key (key-code :p))
@@ -231,7 +240,8 @@
                               entities)
       :refresh-rocket-shot (do
                              (update! screen :fire-rocket-when-ready true)
-                             entities))))
+                             entities)
+      :start-level (levels/start-level screen entities))))
 
 (defgame the-iron-council-game
   :on-create
