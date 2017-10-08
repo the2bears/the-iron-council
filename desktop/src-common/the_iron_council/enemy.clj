@@ -78,29 +78,51 @@
 
 (defn create-test
  ([screen entities]
-  (let [a 30
+  (let [a 0
+        translate-x (/ (- (c/screen-to-world test-side)) 2)
+        translate-y (/ (- (c/screen-to-world test-side)) 1)
         train-car (-> (cond (nil? @train-car-texture)
                             (do
                               (reset! train-car-texture (create-train-car-texture))
                               @train-car-texture)
                             :else @train-car-texture)
-                      (assoc :width train-car-width-adj
+                      (assoc ;:angle 10
+                             :width train-car-width-adj
                              :height train-car-length-adj
-                             ;:translate-x (- train-car-width-offset)
-                             :translate-y (- train-car-length-offset)))
+                             :translate-x (- train-car-width-offset)
+                             :translate-y (- train-car-length-offset)
+                             :car? true))
         test-text (-> (create-test-texture)
-                      (assoc :angle (+ a 10)
+                      (assoc :angle 0
                              :width (c/screen-to-world test-side)
-                             :height (c/screen-to-world test-side)))
-                             ;:translate-x (/ (- (c/screen-to-world test-side)) 2)
-                             ;:translate-y (/ (- (c/screen-to-world test-side)) 2)))
+                             :height (c/screen-to-world test-side)
+                             :test-box? true
+                             :translate-x translate-x
+                             :translate-y translate-y
+                             :origin-x (/ (c/screen-to-world test-side) 2)
+                             :origin-y (/ (c/screen-to-world test-side) 2)))
         test-bundle (bundle train-car test-text)]
-    (assoc test-bundle
+    (assoc train-car ;test-bundle
            :x (/ c/game-width-adj 2)
-           :y (/ c/game-height-adj 2)           
+           :y (* 3 (/ c/game-height-adj 4))
            :angle a
-           :bundle-a a
+           ;:bundle-angle a
+           :test-bundle? true
+           :way-points [[0 (/ (c/screen-to-world test-side) 2)]
+                        [(/ (c/screen-to-world test-side) 2) (/ (c/screen-to-world test-side) 2)]
+                        [(- (/ (c/screen-to-world test-side) 2)) (/ (c/screen-to-world test-side) 2)]
+                        [0 (- (/ (c/screen-to-world test-side) 2))]]
            :render-layer 5))))
+
+(defn handle-test-bundle [screen {:keys [angle entities] :as entity}]
+  (let [entities (->> entities
+                      (map (fn [entity]
+                             (cond ;(:car? entity) (assoc entity :angle (+ (:angle entity) -0.2))
+                                   ;(:test-box? entity) (assoc entity :angle (+ (:angle entity) 0.3))
+                                   :else entity))))]
+
+    (assoc entity :angle (+ 0.3 (:angle entity)) ;:bundle-angle (+ 0.3 (:angle entity)
+           :entities entities)))
 
 (defn create-train-car
  ([screen entities]
@@ -183,4 +205,5 @@
             [(assoc entity :front? false) (create-train-car screen entities (:at-ticks (last top-tracks)))]
             entity)))
       entity)))
+
 

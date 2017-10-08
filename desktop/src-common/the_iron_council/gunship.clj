@@ -74,7 +74,7 @@
     (assoc (texture pix-map) :seed seed)))
 
 (defn create-ship-entity!
-  ([{:keys [option-type] :as screen}]
+  ([{:keys [option-type] :as screen} entities]
    (let [pixel-ship (-> @gunship-texture
                         (assoc :translate-x (- (c/screen-to-world c/ship-mp-xoffset))
                                :translate-y (- (c/screen-to-world c/ship-mp-yoffset))
@@ -94,18 +94,18 @@
                                             :option? true)
          ship-bundle (bundle pixel-ship left-option right-option)
          x (c/screen-to-world (/ c/game-width 2))
-         y c/ship-y-start]
+         y c/ship-y-start
 
-     (assoc ship-bundle
-            :id :gunship
-            :gunship? true
-            :render-layer 90
-            :x x
-            :y y
-            :angle 0
-            :collider (circle x y (c/screen-to-world 3))
-            :collider-type :circle))))
-
+         gunship (assoc ship-bundle
+                        :id :gunship
+                        :gunship? true
+                        :render-layer 90
+                        :x x
+                        :y y
+                        :angle 0
+                        :collider (circle x y (c/screen-to-world 3))
+                        :collider-type :circle)]
+     (conj entities gunship))))
 
 (defn- angle-reset [angle]
   (let [ccw? (< angle 0)
