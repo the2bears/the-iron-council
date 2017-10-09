@@ -162,23 +162,6 @@
            :collider [car-collider car-collider2 indestructible-guard]
            :collider-type :multi)))
 
-(defn assign-armaments
-  [{:keys [x y angle] :as train-car} screen entities]
-  (let [cx 0
-        cy (/ train-car-length-offset 2)
-        car-collider (update-collider x y cx cy angle (/ train-car-width-offset 2) (/ train-car-length-offset 4))
-        car-collider2 (update-collider x y cx (- cy) angle (/ train-car-width-offset 2) (/ train-car-length-offset 4))
-        indestructible-guard (update-collider x
-                                              y
-                                              (- train-car-width-offset (/ indestructible-collider-width 2))
-                                              0
-                                              angle
-                                              (/ indestructible-collider-width 2)
-                                              (/ indestructible-collider-length 2))]
-    (assoc train-car
-           :collider [car-collider car-collider2 indestructible-guard]
-           :collider-type :multi)))
-
 
 (defn create-train-car
  ([screen entities]
