@@ -124,17 +124,51 @@
     (assoc entity :angle (+ 0.3 (:angle entity)) ;:bundle-angle (+ 0.3 (:angle entity)
            :entities entities)))
 
+(defn assign-track
+  [train-car screen entities]
+  (let [current-tracks (sort-by :at-ticks (->> entities
+                                               (filter :track?)
+                                               (filter #(= (:track-id %) :main-line))))
+        track (:at-ticks (last current-tracks))
+        track-entity (first (filter #(= track (:at-ticks %)) current-tracks))
+        i-points (:i-points track-entity)
+        i-point-index 0
+        current-point (get i-points i-point-index)
+        x (+ (:x track-entity) (:x current-point))
+        y (+ (:y track-entity) (:y current-point))
+        angle (:angle track-entity)];angle of track
+    (assoc train-car
+           :x (:x track-entity)
+           :y (:y track-entity)
+           :angle (:angle track-entity)
+           :track track
+           :track-id :main-line
+           :i-point-index i-point-index)))
+
+(defn assign-armaments
+  [{:keys [x y angle] :as train-car} screen entities]
+  (let [cx 0
+        cy (/ train-car-length-offset 2)
+        car-collider (update-collider x y cx cy angle (/ train-car-width-offset 2) (/ train-car-length-offset 4))
+        car-collider2 (update-collider x y cx (- cy) angle (/ train-car-width-offset 2) (/ train-car-length-offset 4))
+        indestructible-guard (update-collider x
+                                              y
+                                              (- train-car-width-offset (/ indestructible-collider-width 2))
+                                              0
+                                              angle
+                                              (/ indestructible-collider-width 2)
+                                              (/ indestructible-collider-length 2))]
+    (assoc train-car
+           :collider [car-collider car-collider2 indestructible-guard]
+           :collider-type :multi)))
+
+
 (defn create-train-car
  ([screen entities]
   (let [current-tracks (sort-by :at-ticks (->> entities
                                                (filter :track?)
                                                (filter #(= (:track-id %) :main-line))))
-        track (:at-ticks (last current-tracks))]
-    (create-train-car screen entities track)))
- ([screen entities track]
-  (let [current-tracks (sort-by :at-ticks (->> entities
-                                               (filter :track?)
-                                               (filter #(= (:track-id %) :main-line))))
+        track (:at-ticks (last current-tracks))
         track-entity (first (filter #(= track (:at-ticks %)) current-tracks))
         i-points (:i-points track-entity)
         i-point-index 0
@@ -158,24 +192,17 @@
                                               angle
                                               (/ indestructible-collider-width 2)
                                               (/ indestructible-collider-length 2))]
-                                              
-    (assoc train-car
-           :train? true
-           :enemy? true
-           :x (:x track-entity)
-           :y (:y track-entity)
-           :angle (:angle track-entity)
-           :width train-car-width-adj
-           :height train-car-length-adj
-           :translate-x (- train-car-width-offset)
-           :translate-y (- train-car-length-offset)
-           :front? true
-           :render-layer 5
-           :track track
-           :track-id :main-line
-           :i-point-index i-point-index
-           :collider [car-collider car-collider2 indestructible-guard]
-           :collider-type :multi))))
+    (-> train-car
+        (assoc :train? true
+               :enemy? true
+               :width train-car-width-adj
+               :height train-car-length-adj
+               :translate-x (- train-car-width-offset)
+               :translate-y (- train-car-length-offset)
+               :front? true
+               :render-layer 5)
+        (assign-track screen entities)
+        (assign-armaments screen entities)))))
 
 (defn- next-track-entity [at-track tracks]
   (let [next-track (first (drop-while #(<= (:at-ticks %) at-track) tracks))]
@@ -202,7 +229,7 @@
                             :x x :y y :i-point-index (if get-next 0 (inc i-point-index)) :angle (+ angle-offset angle)
                             :track (if get-next (:at-ticks next-track) track) :collider new-collider)]
           (if (and (= 8 (count top-tracks)) (:front? entity))
-            [(assoc entity :front? false) (create-train-car screen entities (:at-ticks (last top-tracks)))]
+            [(assoc entity :front? false) (create-train-car screen entities)]
             entity)))
       entity)))
 
