@@ -25,14 +25,14 @@
 (def ^:const game-over-y (c/screen-to-world 420.0))
 
 (defn on-new-game [screen entities]
-  (update! screen
-           :game-state :in-game
-           :p1-lives 3
-           :ticks 0)
-  (levels/level-one screen)
-  (->> entities
-       (gs/create-ship-entity! screen)))
-       ;(levels/start-level screen)))
+  (let [screen (update! screen
+                 :game-state :in-game
+                 :p1-lives 3
+                 :ticks 0
+                 :level 1)]
+    (->> entities
+         (gs/create-ship-entity! screen)
+         (levels/start-level screen))))
   
 (defn handle-all-entities [screen entities]
   (->> entities
@@ -143,6 +143,7 @@
               (let [entities
                     (->> entities
                          (check-for-input screen)
+                         (levels/update-level screen)
                          (handle-all-entities screen);move done here
                          (flatten)
                          (tr/add-tracks screen)
