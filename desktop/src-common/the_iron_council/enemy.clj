@@ -98,13 +98,15 @@
         uuid (c/uuid)
         translate-x (/ (- (c/screen-to-world test-side)) 2)
         translate-y (/ (- (c/screen-to-world test-side)) 1)
+        x (/ c/game-width-adj 2)
+        y (* 3 (/ c/game-height-adj 4))
         train-car (-> (cond (nil? @train-car-texture)
                             (do
                               (reset! train-car-texture (create-train-car-texture))
                               @train-car-texture)
                             :else @train-car-texture)
-                      (assoc :x (/ c/game-width-adj 2)
-                             :y (* 3 (/ c/game-height-adj 4))
+                      (assoc :x x
+                             :y y
                              :angle a
                              :id uuid
                              :test-bundle? true
@@ -119,15 +121,20 @@
                              :translate-y (- train-car-length-offset)
                              :car? true))
         test-cannon (-> (create-cannon-texture)
-                        (assoc :angle 0
+                        (assoc ;:x x
+                               ;:y (/ (c/screen-to-world test-side) 2)
+                               :angle 0
                                :render-layer 6
                                :width (c/screen-to-world 12)
                                :height (c/screen-to-world 16)
                                :test-cannon? true
                                :armament? true
+                               :enemy? true
                                :way-points-index 0
                                :translate-x (- (/ (c/screen-to-world 12) 2))
-                               :translate-y (- (/ (c/screen-to-world 16) 2)))
+                               :translate-y (- (/ (c/screen-to-world 16) 2))
+                               :collider [(update-collider x (+ y (/ (c/screen-to-world test-side) 2)) 0 0 a (/ (c/screen-to-world test-side) 3) (/ (c/screen-to-world test-side) 3))]
+                               :collider-type :multi)
                         (position-from-parent train-car))]
         
         ;test-bundle (bundle train-car test-cannon)]
@@ -157,13 +164,19 @@
     (assoc entity :angle (+ 0.3 (:angle entity))))
 ;           :entities entities))
 
-(defn handle-armament [screen entities {:keys [parent-id way-points-index] :as entity}]
-  (let [{:keys [x y angle way-points] :as parent} (first (filter #(= parent-id (:id %)) entities))
-        adjusted-way-point (updated-way-point (get way-points way-points-index) (float angle))]
+(defn handle-armament [screen entities {:keys [x y angle collider parent-id way-points-index] :as entity}]
+  (let [{:keys [way-points] :as parent} (first (filter #(= parent-id (:id %)) entities))
+        p-x (:x parent)
+        p-y (:y parent)
+        p-angle (:angle parent)
+        adjusted-way-point (updated-way-point (get way-points way-points-index) p-angle)
+        new-x (+ p-x (first adjusted-way-point))
+        new-y (+ p-y (second adjusted-way-point))]
     (assoc entity
            :angle (- (:angle entity) 0.2)
-           :x (+ x (first adjusted-way-point))
-           :y (+ y (second adjusted-way-point)))))    
+           :x new-x
+           :y new-y
+           :collider (map #(update-collider new-x new-y angle %) collider))))    
   
 (defn assign-track
   [train-car screen entities]

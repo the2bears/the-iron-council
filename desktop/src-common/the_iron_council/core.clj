@@ -183,7 +183,6 @@
               (conj entities eb))
             (= key (key-code :k))
             (let [test-car (enemy/create-test screen entities)]
-              (pp/pprint test-car)
               (concat entities test-car))
             (= key (key-code :l))
             (let [test-car (filter :test-cannon? entities)]
@@ -217,7 +216,7 @@
               (update! screen :debug (not debug))
               entities)
             (= key (key-code :g))
-            (let [gunship (first (filter #(:gunship? %) entities))]
+            (let [gunship (first (filter #(:train? %) entities))]
               (clojure.pprint/pprint gunship)))
       :paused
       (cond (= key (key-code :p))
