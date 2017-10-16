@@ -203,8 +203,8 @@
   [{:keys [x y angle] :as train-car} screen entities]
   (let [cx 0
         cy (/ train-car-length-offset 2)
-        car-collider (update-collider x y cx cy angle (/ train-car-width-offset 2) (/ train-car-length-offset 4))
-        car-collider2 (update-collider x y cx (- cy) angle (/ train-car-width-offset 2) (/ train-car-length-offset 4))
+        ;car-collider (update-collider x y cx cy angle (/ train-car-width-offset 2) (/ train-car-length-offset 4))
+        ;car-collider2 (update-collider x y cx (- cy) angle (/ train-car-width-offset 2) (/ train-car-length-offset 4))
         indestructible-guard (update-collider x
                                               y
                                               (- train-car-width-offset (/ indestructible-collider-width 2))
@@ -213,28 +213,53 @@
                                               (/ indestructible-collider-width 2)
                                               (/ indestructible-collider-length 2))]
     (assoc train-car
-           :collider [car-collider car-collider2 indestructible-guard]
+           :collider [;car-collider car-collider2
+                      indestructible-guard]
            :collider-type :multi)))
 
 
 (defn create-train-car
  ([screen entities]
-  (let [train-car (cond (nil? @train-car-texture)
-                        (do
-                          (reset! train-car-texture (create-train-car-texture))
-                          @train-car-texture)
-                        :else @train-car-texture)]
-    (-> train-car
-        (assoc :train? true
-               :enemy? true
-               :width train-car-width-adj
-               :height train-car-length-adj
-               :translate-x (- train-car-width-offset)
-               :translate-y (- train-car-length-offset)
-               :front? true
-               :render-layer 5)
-        (assign-track screen entities)
-        (assign-armaments screen entities)))))
+  (let [uuid (c/uuid)
+        train-car (-> (cond (nil? @train-car-texture)
+                            (do
+                              (reset! train-car-texture (create-train-car-texture))
+                              @train-car-texture)
+                            :else @train-car-texture)
+   ;[(-> train-car
+                      (assoc :train? true
+                             :enemy? true
+                             :id uuid
+                             :width train-car-width-adj
+                             :height train-car-length-adj
+                             :translate-x (- train-car-width-offset)
+                             :translate-y (- train-car-length-offset)
+                             :front? true
+                             :render-layer 5
+                             :way-points [[0 (/ (c/screen-to-world test-side) 2)]
+                                          [(/ (c/screen-to-world test-side) 2) (/ (c/screen-to-world test-side) 2)]
+                                          [(- (/ (c/screen-to-world test-side) 2)) (/ (c/screen-to-world test-side) 2)]
+                                          [0 (- (/ (c/screen-to-world test-side) 2))]])
+                      (assign-track screen entities)
+                      (assign-armaments screen entities))
+        cannon  (-> (create-cannon-texture)
+                    (assoc :angle 0
+                           :render-layer 6
+                           :width (c/screen-to-world 12)
+                           :height (c/screen-to-world 16)
+                           :parent-id uuid
+                           :test-cannon? true
+                           :armament? true
+                           :enemy? true
+                           :way-points-index 0
+                           :translate-x (- (/ (c/screen-to-world 12) 2))
+                           :translate-y (- (/ (c/screen-to-world 16) 2))
+                           :collider [(update-collider (:x train-car) (+ (:y train-car) (/ (c/screen-to-world test-side) 2))
+                                                       0 0 (:angle train-car) (/ (c/screen-to-world test-side) 3) (/ (c/screen-to-world test-side) 3))]
+                           :collider-type :multi)
+                    (position-from-parent train-car))]
+    [train-car cannon])))
+
 
 (defn- next-track-entity [at-track tracks]
   (let [next-track (first (drop-while #(<= (:at-ticks %) at-track) tracks))]

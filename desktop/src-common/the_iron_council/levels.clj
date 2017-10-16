@@ -9,7 +9,7 @@
   entities)
 
 (defn start-train [screen entities]
-  (conj entities (enemy/create-train-car screen entities)))
+  (into entities (enemy/create-train-car screen entities)))
 
 (def levels {1 {:events [{:level-ticks 120 :fn start-train}]}})
 
