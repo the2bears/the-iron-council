@@ -1,7 +1,7 @@
 (ns the-iron-council.enemy
   (:require [play-clj.core :refer [bundle color pixmap! pixmap* pixmap-format shape update! x y] :as core]
             [play-clj.g2d :refer [texture]]
-            [play-clj.math :refer [circle circle! polygon polygon! rectangle rectangle! vector-2]]
+            [play-clj.math :refer [circle circle! polygon polygon! rectangle rectangle! vector-2 vector-2!]]
             [the-iron-council.common :as c]
             [the-iron-council.utils :as utils]))
 
@@ -28,6 +28,9 @@
                   ;[dark [2 2 32 68]]
                   [dark [1 1 34 70]]])
 
+(def cannon-rects [[(color :blue) [0 0 12 12]]
+                   [(color :white) [4 6 4 10]]])
+
 (defn- train-bolt-strip [pix-map x y w h]
   (doto pix-map
     (utils/pix-map-rect dark x y w h)
@@ -35,6 +38,13 @@
     (utils/pix-map-rect darkest x y w 1))
   (doseq [x (range x w 4)]
     (utils/pix-map-rect pix-map darkest x (inc y) 1 1)))
+
+(defn- create-cannon-texture []
+  (let [pix-map (pixmap* 16 16 (pixmap-format :r-g-b-a8888))]
+    (doseq [color-set cannon-rects]
+      (doseq [[x y w h] (partition 4 (second color-set))]
+        (utils/pix-map-rect pix-map (first color-set) x y w h)))
+    (texture pix-map :set-region 0 0 12 16)))
 
 (defn- create-train-car-texture []
   (let [pix-map (pixmap* 128 128 (pixmap-format :r-g-b-a8888))]
@@ -76,9 +86,16 @@
       :w width-offset
       :collider-type :poly})))
 
+(defn- position-from-parent [{:keys [way-points-index] :as child} {:keys [x y id way-points] :as parent}]
+  (assoc child
+         :x (+ x (first (get way-points way-points-index)))
+         :y (+ y (second (get way-points way-points-index)))
+         :parent-id id))
+
 (defn create-test
  ([screen entities]
   (let [a 0
+        uuid (c/uuid)
         translate-x (/ (- (c/screen-to-world test-side)) 2)
         translate-y (/ (- (c/screen-to-world test-side)) 1)
         train-car (-> (cond (nil? @train-car-texture)
@@ -86,44 +103,68 @@
                               (reset! train-car-texture (create-train-car-texture))
                               @train-car-texture)
                             :else @train-car-texture)
-                      (assoc ;:angle 10
+                      (assoc :x (/ c/game-width-adj 2)
+                             :y (* 3 (/ c/game-height-adj 4))
+                             :angle a
+                             :id uuid
+                             :test-bundle? true
+                             :way-points [[0 (/ (c/screen-to-world test-side) 2)]
+                                          [(/ (c/screen-to-world test-side) 2) (/ (c/screen-to-world test-side) 2)]
+                                          [(- (/ (c/screen-to-world test-side) 2)) (/ (c/screen-to-world test-side) 2)]
+                                          [0 (- (/ (c/screen-to-world test-side) 2))]]
+                             :render-layer 5
                              :width train-car-width-adj
                              :height train-car-length-adj
                              :translate-x (- train-car-width-offset)
                              :translate-y (- train-car-length-offset)
                              :car? true))
-        test-text (-> (create-test-texture)
-                      (assoc :angle 0
-                             :width (c/screen-to-world test-side)
-                             :height (c/screen-to-world test-side)
-                             :test-box? true
-                             :translate-x translate-x
-                             :translate-y translate-y
-                             :origin-x (/ (c/screen-to-world test-side) 2)
-                             :origin-y (/ (c/screen-to-world test-side) 2)))
-        test-bundle (bundle train-car test-text)]
-    (assoc train-car ;test-bundle
-           :x (/ c/game-width-adj 2)
-           :y (* 3 (/ c/game-height-adj 4))
-           :angle a
-           ;:bundle-angle a
-           :test-bundle? true
-           :way-points [[0 (/ (c/screen-to-world test-side) 2)]
-                        [(/ (c/screen-to-world test-side) 2) (/ (c/screen-to-world test-side) 2)]
-                        [(- (/ (c/screen-to-world test-side) 2)) (/ (c/screen-to-world test-side) 2)]
-                        [0 (- (/ (c/screen-to-world test-side) 2))]]
-           :render-layer 5))))
+        test-cannon (-> (create-cannon-texture)
+                        (assoc :angle 0
+                               :render-layer 6
+                               :width (c/screen-to-world 12)
+                               :height (c/screen-to-world 16)
+                               :test-cannon? true
+                               :armament? true
+                               :way-points-index 0
+                               :translate-x (- (/ (c/screen-to-world 12) 2))
+                               :translate-y (- (/ (c/screen-to-world 16) 2)))
+                        (position-from-parent train-car))]
+        
+        ;test-bundle (bundle train-car test-cannon)]
+    ;(clojure.core/ppritest-cannon)
+    [train-car test-cannon])))
 
-(defn handle-test-bundle [screen {:keys [angle entities] :as entity}]
-  (let [entities (->> entities
-                      (map (fn [entity]
-                             (cond ;(:car? entity) (assoc entity :angle (+ (:angle entity) -0.2))
-                                   ;(:test-box? entity) (assoc entity :angle (+ (:angle entity) 0.3))
-                                   :else entity))))]
+(comment  
+  (def way-points [[0 (/ (c/screen-to-world test-side) 2)]
+                   [(/ (c/screen-to-world test-side) 2) (/ (c/screen-to-world test-side) 2)]
+                   [(- (/ (c/screen-to-world test-side) 2)) (/ (c/screen-to-world test-side) 2)]
+                   [0 (- (/ (c/screen-to-world test-side) 2))]])
+  (def angle 20))
 
-    (assoc entity :angle (+ 0.3 (:angle entity)) ;:bundle-angle (+ 0.3 (:angle entity)
-           :entities entities)))
+(defn- updated-way-point [way-point angle]  
+  (let [wp-x (first way-point)
+        wp-y (second way-point)
+        v (vector-2! (vector-2 wp-x wp-y) :rotate angle)]
+    [(core/x v) (core/y v)])) ;(c/screen-to-world 1)))
 
+(defn handle-test-bundle [screen {:keys [angle entities way-points] :as entity}]
+;  (let [entities (->> entities
+;                      (map (fn [entity]
+;                             (cond ;(:car? entity) (assoc entity :angle (+ (:angle entity) -0.2))
+;                                   ;(:test-box? entity) (assoc entity :angle (+ (:angle entity) 0.3))
+;                                   :else entity}]
+
+    (assoc entity :angle (+ 0.3 (:angle entity))))
+;           :entities entities))
+
+(defn handle-armament [screen entities {:keys [parent-id way-points-index] :as entity}]
+  (let [{:keys [x y angle way-points] :as parent} (first (filter #(= parent-id (:id %)) entities))
+        adjusted-way-point (updated-way-point (get way-points way-points-index) (float angle))]
+    (assoc entity
+           :angle (- (:angle entity) 0.2)
+           :x (+ x (first adjusted-way-point))
+           :y (+ y (second adjusted-way-point)))))    
+  
 (defn assign-track
   [train-car screen entities]
   (let [current-tracks (sort-by :at-ticks (->> entities

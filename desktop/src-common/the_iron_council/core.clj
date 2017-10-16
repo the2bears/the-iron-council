@@ -44,6 +44,7 @@
                     (or (:track? entity) (:rail? entity)) (tr/move-track screen entity)
                     (:explosion? entity) (exp/handle-explosion entity)
                     (:train? entity) (enemy/move-train screen entities entity)
+                    (:armament? entity) (enemy/handle-armament screen entities entity)
                     (:snow? entity) (snow/move-snow screen entity)
                     (:test-bundle? entity) (enemy/handle-test-bundle screen entity)
                     :else entity)))))
@@ -182,11 +183,10 @@
               (conj entities eb))
             (= key (key-code :k))
             (let [test-car (enemy/create-test screen entities)]
-;                  test-car (-> test-car
-;                               (assoc :test? true))]
-              (conj entities test-car))
+              (pp/pprint test-car)
+              (concat entities test-car))
             (= key (key-code :l))
-            (let [test-car (filter :test-bundle? entities)]
+            (let [test-car (filter :test-cannon? entities)]
               (pp/pprint test-car)
               entities)
             (= key (key-code :d))
