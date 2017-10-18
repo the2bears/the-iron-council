@@ -28,8 +28,8 @@
                   ;[dark [2 2 32 68]]
                   [dark [1 1 34 70]]])
 
-(def cannon-rects [[(color :blue) [0 0 12 12]]
-                   [(color :white) [4 6 4 10]]])
+(def cannon-rects [[(color :blue) [0 4 12 12]]
+                   [(color :white) [4 0 4 10]]])
 
 (defn- train-bolt-strip [pix-map x y w h]
   (doto pix-map
@@ -123,7 +123,7 @@
         test-cannon (-> (create-cannon-texture)
                         (assoc ;:x x
                                ;:y (/ (c/screen-to-world test-side) 2)
-                               :angle 0
+                               :angle 180
                                :render-layer 6
                                :width (c/screen-to-world 12)
                                :height (c/screen-to-world 16)
@@ -166,14 +166,27 @@
 
 (defn handle-armament [screen entities {:keys [x y angle collider parent-id way-points-index] :as entity}]
   (let [{:keys [way-points] :as parent} (first (filter #(= parent-id (:id %)) entities))
+        gunship (first (filter #(:gunship? %) entities))
         p-x (:x parent)
         p-y (:y parent)
+        g-x (:x gunship)
+        g-y (:y gunship)
+        angle-to-gunship (vector-2! (vector-2! (vector-2 g-x g-y) :sub (vector-2 x y)) :angle)
+        angle-to-gunship (mod (- angle-to-gunship 90) 360)
+        angle (+ angle 360)
         p-angle (:angle parent)
+        angle-diff (mod (- angle-to-gunship angle) 360)
+        angle-delta-fn (cond (> angle-to-gunship angle)
+                             (if (< angle-diff 180) - +)
+                             :else
+                             (if (< angle-diff 180) + -))
+                          
         adjusted-way-point (updated-way-point (get way-points way-points-index) p-angle)
         new-x (+ p-x (first adjusted-way-point))
         new-y (+ p-y (second adjusted-way-point))]
+    ;(prn :handle-armament :angle-to-gunship angle-to-gunship)
     (assoc entity
-           :angle (- (:angle entity) 0.2)
+           :angle (angle-delta-fn angle 0.8) ;angle-to-gunship ;(- (:angle entity) 0.2)
            :x new-x
            :y new-y
            :collider (map #(update-collider new-x new-y angle %) collider))))    
@@ -226,7 +239,6 @@
                               (reset! train-car-texture (create-train-car-texture))
                               @train-car-texture)
                             :else @train-car-texture)
-   ;[(-> train-car
                       (assoc :train? true
                              :enemy? true
                              :id uuid
