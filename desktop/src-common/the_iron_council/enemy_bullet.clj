@@ -41,6 +41,26 @@
         (utils/pix-map-rect pix-map (first color-set) x y w h)))
     (texture pix-map :set-region 0 0 8 8)))
 
+(defn fire-turret-bullet [screen x y a]
+  (let [bullet-velocity-vector (vector-2 0 (* bullet-speed2 2) :rotate a)
+        constant-velocity (bh/linear-movement
+                           :dx (core/x bullet-velocity-vector)
+                           :dy (core/y bullet-velocity-vector))]
+    (assoc @bullet-texture
+           :enemy-bullet? true
+           :id (c/uuid)
+           :render-layer 60
+           :x x
+           :y y
+           :angle 0
+           :width (c/screen-to-world 8)
+           :height (c/screen-to-world 8)
+           :translate-x (- (c/screen-to-world 4))
+           :translate-y (- (c/screen-to-world 4))
+           :collider (circle x y (c/screen-to-world 3))
+           :collider-type :circle
+           :bullet-hell-fn (some-fn constant-velocity))))
+
 (defn test-bullet!
   [screen x y a]
   (let [bullet-velocity-vector (vector-2 0 bullet-speed :rotate a)

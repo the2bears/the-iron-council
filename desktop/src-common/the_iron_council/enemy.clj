@@ -3,6 +3,7 @@
             [play-clj.g2d :refer [texture]]
             [play-clj.math :refer [circle circle! polygon polygon! rectangle rectangle! vector-2 vector-2!]]
             [the-iron-council.common :as c]
+            [the-iron-council.enemy-bullet :as eb]
             [the-iron-council.utils :as utils]))
 
 (def rec-side (c/screen-to-world 10))
@@ -164,15 +165,17 @@
     (assoc entity :angle (+ 0.3 (:angle entity))))
 ;           :entities entities))
 
-(defn handle-armament [screen entities {:keys [x y angle collider parent-id way-points-index] :as entity}]
+(defn handle-armament [screen entities {:keys [x y angle collider parent-id way-points-index enemy-ticks] :or {enemy-ticks 1} :as entity}]
   (let [{:keys [way-points] :as parent} (first (filter #(= parent-id (:id %)) entities))
         gunship (first (filter #(:gunship? %) entities))
         p-x (:x parent)
         p-y (:y parent)
-        g-x (:x gunship)
-        g-y (:y gunship)
+        g-x (or (:x gunship)
+                x)
+        g-y (or (:y gunship)
+                y)
         angle-to-gunship (vector-2! (vector-2! (vector-2 g-x g-y) :sub (vector-2 x y)) :angle)
-        angle-to-gunship (mod (- angle-to-gunship 90) 360)
+        angle-to-gunship (if gunship (mod (- angle-to-gunship 90) 360) 180)
         angle (+ angle 360)
         p-angle (:angle parent)
         angle-diff (mod (- angle-to-gunship angle) 360)
@@ -180,16 +183,18 @@
                              (if (< angle-diff 180) - +)
                              :else
                              (if (< angle-diff 180) + -))
-                          
         adjusted-way-point (updated-way-point (get way-points way-points-index) p-angle)
         new-x (+ p-x (first adjusted-way-point))
         new-y (+ p-y (second adjusted-way-point))]
-    ;(prn :handle-armament :angle-to-gunship angle-to-gunship)
-    (assoc entity
+    [(when (or (= 0 (mod enemy-ticks 180))
+               (= 0 (mod (+ 20 enemy-ticks) 180)))
+       (eb/fire-turret-bullet screen x y angle))
+     (assoc entity
            :angle (angle-delta-fn angle 0.8) ;angle-to-gunship ;(- (:angle entity) 0.2)
            :x new-x
            :y new-y
-           :collider (map #(update-collider new-x new-y angle %) collider))))    
+           :enemy-ticks (inc enemy-ticks)
+           :collider (map #(update-collider new-x new-y angle %) collider))]))    
   
 (defn assign-track
   [train-car screen entities]

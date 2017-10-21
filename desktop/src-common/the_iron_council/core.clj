@@ -145,7 +145,7 @@
                     (->> entities
                          (check-for-input screen)
                          (levels/update-level screen)
-                         (handle-all-entities screen);move done here
+                         (handle-all-entities screen);move done here, shots
                          (flatten)
                          (tr/add-tracks screen)
                          ;(enemy-test screen)
