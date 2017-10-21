@@ -45,7 +45,14 @@
   (let [bullet-velocity-vector (vector-2 0 (* bullet-speed2 2) :rotate a)
         constant-velocity (bh/linear-movement
                            :dx (core/x bullet-velocity-vector)
-                           :dy (core/y bullet-velocity-vector))]
+                           :dy (core/y bullet-velocity-vector)
+                           :max-ticks 45)
+        split (bh/split
+               :dx (core/x bullet-velocity-vector)
+               :dy (core/y bullet-velocity-vector)
+               :da 10
+               :max-ticks 46)
+        continue (bh/continue :max-ticks 600)]
     (assoc @bullet-texture
            :enemy-bullet? true
            :id (c/uuid)
@@ -59,7 +66,7 @@
            :translate-y (- (c/screen-to-world 4))
            :collider (circle x y (c/screen-to-world 3))
            :collider-type :circle
-           :bullet-hell-fn (some-fn constant-velocity))))
+           :bullet-hell-fn (some-fn constant-velocity split continue))))
 
 (defn test-bullet!
   [screen x y a]
@@ -125,8 +132,12 @@
     (reset! bullet-texture (create-bullet-texture))))
 
 (defn handle-bullet [screen {:keys [bullet-hell-fn] :as entity}]
-  (let [move-fn bullet-hell-fn]
-    (if-let [{:keys [x y collider] :as bullet} (move-fn entity)]
-      (do (circle! collider :set-position x y)
-          (when (in-bounds bullet)
-            bullet)))))
+  (let [bullets (flatten (conj [] (bullet-hell-fn entity)))]
+    (loop [bullets bullets
+           acc []]
+      (if (seq bullets)
+        (let [{:keys [x y collider] :as bullet} (first bullets)]
+          (do (circle! collider :set-position x y)
+              (when (in-bounds bullet)
+                (recur (rest bullets) (conj acc bullet)))))
+        acc))))

@@ -1,6 +1,7 @@
 (ns the-iron-council.bullet-hell
-  (:require [play-clj.math :refer [vector-2 vector-2!]]
-            [play-clj.core :refer [x y] :as core]))
+  (:require [play-clj.math :refer [circle circle! vector-2 vector-2!]]
+            [play-clj.core :refer [x y] :as core]
+            [the-iron-council.common :as c]))
 
 (defn- within-ticks?
   "Simple predicate for checking within the range, inclusive of the lower bounds, exclusive of the upper one."
@@ -114,3 +115,30 @@
                  :dx dx
                  :dy dy
                  :ticks (inc ticks)))))))
+
+(defn split
+  [& {:keys [dx dy da min-ticks max-ticks]
+      :or {da 0.0 min-ticks 0 max-ticks Integer/MAX_VALUE}}]
+  (let [v1 (vector-2 dx dy :rotate da)
+        v2 (vector-2 dx dy :rotate (- da))]
+    (fn [{:keys [x y dx dy ticks collider bullet-hell-fn] :or {ticks 0} :as bullet}]
+      (when (within-ticks? min-ticks ticks max-ticks)
+        (let [b1 (assoc bullet
+                        :id (c/uuid)
+                        :x x
+                        :y y
+                        :dx (core/x v1)
+                        :dy (core/y v1)
+                        :ticks (inc ticks)
+                        :collider (circle x y (.radius ^com.badlogic.gdx.math.Circle collider))
+                        :bullet-hell-fn bullet-hell-fn)
+              b2 (assoc bullet
+                        :id (c/uuid)
+                        :x x
+                        :y y
+                        :dx (core/x v2)
+                        :dy (core/y v2)
+                        :ticks (inc ticks)
+                        :collider (circle x y (.radius ^com.badlogic.gdx.math.Circle collider))
+                        :bullet-hell-fn bullet-hell-fn)]
+          [b1 b2])))))
