@@ -49,22 +49,27 @@
       (compute-collision bullet e))
     false))
 
+(defn- enemy-bullet-gunship-collision? [enemy-bullet gunship]
+  (let [;_ (prn :enemy-bullet-gunship-collision enemy-bullet gunship)
+        collision? (intersector! :overlaps (:collider enemy-bullet) (:collider gunship))]
+    collision?))
+
 (defn compute-collisions [{:keys [ticks] :as screen} entities]
   (let [bullets (filter :bullet? entities)
         enemies (filter :enemy? entities)
         enemy-bullets (filter :enemy-bullet? entities)
-        gunship (filter :gunship? entities)
-        collisions-with-gunship (if (empty? gunship)
-                                  []
-                                  (for [enemy-bullet enemy-bullets]
-                                    (if-some [collision (compute-collision enemy-bullet (first gunship))]
-                                      collision)))
+        gunship (first (filter :gunship? entities))
+        collision-with-gunship? (and gunship
+                                     (reduce (fn[acc e-b]
+                                               (or acc (enemy-bullet-gunship-collision? e-b gunship)))
+                                             false
+                                             enemy-bullets))
         collisions (remove nil? (flatten (for [bullet bullets
                                                enemy enemies]
                                             (if-some [collision (compute-collision bullet enemy)]
                                               collision))))]
     (when (not (empty? collisions))
       (update! screen :collisions collisions))
-    (if (first collisions-with-gunship)
-      (conj (remove :gunship? entities) (exp/create-explosion (:x (first gunship)) (:y (first gunship))))
+    (if collision-with-gunship?
+      (conj (remove :gunship? entities) (exp/create-explosion (:x gunship) (:y gunship)))
       entities)))
