@@ -103,7 +103,7 @@
                         :x x
                         :y y
                         :angle 0
-                        :collider (circle x y (c/screen-to-world 3))
+                        :collider {:x x :y y :r (c/screen-to-world 3)} ;(circle x y (c/screen-to-world 3))
                         :collider-type :circle)]
      (conj entities gunship))))
 
@@ -153,8 +153,11 @@
                            :right (if (> angle-anchored c/yaw-delta-max) c/yaw-delta-max angle-anchored)
                            :left (if (< angle-anchored (- c/yaw-delta-max)) (- c/yaw-delta-max) angle-anchored)
                            :none (angle-reset angle-anchored)))]
-    (circle! collider :set-position x-anchored y-anchored)
-    (assoc entity :x x-anchored :y y-anchored :angle angle-anchored)))
+    (assoc entity
+           :x x-anchored
+           :y y-anchored
+           :angle angle-anchored
+           :collider (assoc collider :x x :y y))))
 
 (defn move-player-tick [screen entities {:keys [:x :y :angle] :as entity}]
   (let [x-move?  (or (key-pressed? :dpad-right) (key-pressed? :dpad-left))

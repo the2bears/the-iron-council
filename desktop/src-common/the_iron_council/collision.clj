@@ -49,9 +49,10 @@
       (compute-collision bullet e))
     false))
 
-(defn- enemy-bullet-gunship-collision? [enemy-bullet gunship]
-  (let [;_ (prn :enemy-bullet-gunship-collision enemy-bullet gunship)
-        collision? (intersector! :overlaps (:collider enemy-bullet) (:collider gunship))]
+(defn- enemy-bullet-gunship-collision? [{:keys [collider] :as enemy-bullet} gunship]
+  (let [{:keys [x y r]} collider
+        g-collider (:collider gunship)
+        collision? (intersector! :overlaps (circle x y r) (circle (:x g-collider) (:y g-collider) (:r g-collider)))]
     collision?))
 
 (defn compute-collisions [{:keys [ticks] :as screen} entities]

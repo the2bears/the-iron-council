@@ -25,9 +25,9 @@
     :circle (doto shape-renderer
               (.setColor 0 0 1 1)
               (.begin)
-              (.circle (.x collider)
-                       (.y collider)
-                       (.radius collider)
+              (.circle (:x collider)
+                       (:y collider)
+                       (:r collider)
                        8)
               (.end))
     "default"))

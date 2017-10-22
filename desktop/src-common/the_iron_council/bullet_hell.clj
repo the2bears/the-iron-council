@@ -130,7 +130,6 @@
                         :dx (core/x v1)
                         :dy (core/y v1)
                         :ticks (inc ticks)
-                        :collider (circle x y (.radius ^com.badlogic.gdx.math.Circle collider))
                         :bullet-hell-fn bullet-hell-fn)
               b2 (assoc bullet
                         :id (c/uuid)
@@ -139,6 +138,5 @@
                         :dx (core/x v2)
                         :dy (core/y v2)
                         :ticks (inc ticks)
-                        :collider (circle x y (.radius ^com.badlogic.gdx.math.Circle collider))
                         :bullet-hell-fn bullet-hell-fn)]
           [b1 b2])))))

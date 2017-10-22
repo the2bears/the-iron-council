@@ -64,7 +64,7 @@
            :height (c/screen-to-world 8)
            :translate-x (- (c/screen-to-world 4))
            :translate-y (- (c/screen-to-world 4))
-           :collider (circle x y (c/screen-to-world 3))
+           :collider {:x x :y y :r (c/screen-to-world 3)}
            :collider-type :circle
            :bullet-hell-fn (some-fn constant-velocity split continue))))
 
@@ -121,7 +121,7 @@
            :height (c/screen-to-world 8)
            :translate-x (- (c/screen-to-world 4))
            :translate-y (- (c/screen-to-world 4))
-           :collider (circle (c/screen-to-world x) (c/screen-to-world y) (c/screen-to-world 3))
+           :collider {:x (c/screen-to-world x) :y (c/screen-to-world y) :r (c/screen-to-world 3)}
            :collider-type :circle
            :bullet-hell-fn ;(some-fn linear3 linear4 rotate1 wait2))))
               ;(some-fn linear1 turn1 wait2))))
@@ -137,7 +137,6 @@
            acc []]
       (if (seq bullets)
         (let [{:keys [x y collider] :as bullet} (first bullets)]
-          (do (circle! collider :set-position x y)
-              (when (in-bounds bullet)
-                (recur (rest bullets) (conj acc bullet)))))
+          (when (in-bounds bullet)
+                (recur (rest bullets) (conj acc (assoc bullet :collider (assoc collider :x x :y y))))))
         acc))))
