@@ -19,9 +19,10 @@
 (def right-edge (+ c/game-width-adj c/oob-padding))
 (def left-edge (- c/oob-padding))
 
-(defn- in-bounds [{:keys [x y] :as bullet}]
-  (and (< left-edge x right-edge)
-       (< lower-edge y upper-edge)))
+(defn- in-bounds [bullet]
+  (if-let [{:keys [x y]} bullet]
+    (and (< left-edge x right-edge)
+         (< lower-edge y upper-edge))))
 
 (defn- simple-movement
   ([velocity min-ticks max-ticks]
@@ -47,12 +48,26 @@
                            :dx (core/x bullet-velocity-vector)
                            :dy (core/y bullet-velocity-vector)
                            :max-ticks 45)
+        change-speed (bh/change-speed
+                      :sx (core/x bullet-velocity-vector)
+                      :sy (core/y bullet-velocity-vector)
+                      :tx (/ (core/x bullet-velocity-vector) 3)
+                      :ty (/ (core/y bullet-velocity-vector) 3)
+                      :max-ticks 60)
         split (bh/split
                :dx (core/x bullet-velocity-vector)
                :dy (core/y bullet-velocity-vector)
                :da 10
-               :max-ticks 46)
-        continue (bh/continue :max-ticks 600)]
+               :max-ticks 62)
+        continue (bh/continue :max-ticks 600)
+        constant-velocity-2 (bh/linear-movement
+                             :dx (core/x bullet-velocity-vector)
+                             :dy (core/y bullet-velocity-vector)
+                             :max-ticks 61)
+        constant-velocity-3 (bh/linear-movement
+                             :dx (core/x bullet-velocity-vector)
+                             :dy (core/y bullet-velocity-vector)
+                             :max-ticks 90)]
     (assoc @bullet-texture
            :enemy-bullet? true
            :id (c/uuid)
@@ -66,7 +81,8 @@
            :translate-y (- (c/screen-to-world 4))
            :collider {:x x :y y :r (c/screen-to-world 3)}
            :collider-type :circle
-           :bullet-hell-fn (some-fn constant-velocity split continue))))
+           :bullet-hell-fn (some-fn change-speed constant-velocity-2 split continue))));constant-velocity-2)))) ;continue))))
+                            ;constant-velocity-3)))) ; split constant-velocity-2)))); continue))))
 
 (defn test-bullet!
   [screen x y a]
