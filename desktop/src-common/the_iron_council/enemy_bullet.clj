@@ -7,10 +7,18 @@
             [the-iron-council.utils :as utils]))
 
 
-(def bullet-texture (atom nil))
-(def bullet-rects [[(color 1.0 0 1.0 1) [2 0 4 8 1 1 6 6 0 2 8 4]]
-                   [(color 1.0 0.5 1.0 1) [2 1 4 6 1 2 6 4]]
-                   [(color :white) [3 1 2 6 2 2 4 4 1 3 6 2]]])
+(def med-bullet-texture (atom nil))
+(def long-bullet-texture (atom nil))
+(def med-bullet-rects [[(color 1.0 0 1.0 1) [2 0 4 8 1 1 6 6 0 2 8 4]]
+                       [(color 1.0 0.5 1.0 1) [2 1 4 6 1 2 6 4]]
+                       [(color :white) [3 1 2 6 2 2 4 4 1 3 6 2]]])
+(def long-bullet-rects [[(color 1.0 0 1.0 1) [8 1 4 8 9 0 2 10]]
+                        [(color 1.0 0.5 1.0 1) [9 1 2 8]]
+                        [(color :white) [9 2 2 6]]])
+
+
+
+
 (def bullet-speed (c/screen-to-world 0.2))
 (def bullet-speed2 (c/screen-to-world 1))
 
@@ -35,12 +43,30 @@
               :y (+ y dy)
               :ticks (inc ticks))))))
 
-(defn- create-bullet-texture []
-  (let [pix-map (pixmap* 8 8 (pixmap-format :r-g-b-a8888))]
-    (doseq [color-set bullet-rects]
+(defn create-bullet-textures! []
+  (let [pix-map (pixmap* 16 16 (pixmap-format :r-g-b-a8888))]
+    (doseq [color-set med-bullet-rects]
       (doseq [[x y w h] (partition 4 (second color-set))]
         (utils/pix-map-rect pix-map (first color-set) x y w h)))
-    (texture pix-map :set-region 0 0 8 8)))
+    (doseq [color-set long-bullet-rects]
+      (doseq [[x y w h] (partition 4 (second color-set))]
+        (utils/pix-map-rect pix-map (first color-set) x y w h)))
+    (reset! med-bullet-texture (-> (texture pix-map :set-region 0 0 8 8)
+                                   (assoc :enemy-bullet? true
+                                          :render-layer 60
+                                          :width (c/screen-to-world 8)
+                                          :height (c/screen-to-world 8)
+                                          :translate-x (- (c/screen-to-world 4))
+                                          :translate-y (- (c/screen-to-world 4)))))
+    (reset! long-bullet-texture (-> (texture pix-map :set-region 8 0 4 10)
+                                    (assoc :enemy-bullet? true
+                                           :render-layer 60
+                                           :width (c/screen-to-world 4)
+                                           :height (c/screen-to-world 10)
+                                           :translate-x (- (c/screen-to-world 2))
+                                           :translate-y (- (c/screen-to-world 5)))))))
+(defn init! []
+  (create-bullet-textures!))
 
 (defn fire-turret-bullet [screen x y a]
   (let [bullet-velocity-vector (vector-2 0 (* bullet-speed2 2) :rotate a)
@@ -68,18 +94,12 @@
                              :dx (core/x bullet-velocity-vector)
                              :dy (core/y bullet-velocity-vector)
                              :max-ticks 90)]
-    (assoc @bullet-texture
-           :enemy-bullet? true
+    (assoc @long-bullet-texture
            :id (c/uuid)
-           :render-layer 60
            :x x
            :y y
-           :angle 0
-           :width (c/screen-to-world 8)
-           :height (c/screen-to-world 8)
-           :translate-x (- (c/screen-to-world 4))
-           :translate-y (- (c/screen-to-world 4))
-           :collider {:x x :y y :r (c/screen-to-world 3)}
+           :angle a
+           :collider {:x x :y y :r (c/screen-to-world 2)}
            :collider-type :circle
            :bullet-hell-fn (some-fn change-speed constant-velocity-2 split continue))));constant-velocity-2)))) ;continue))))
                             ;constant-velocity-3)))) ; split constant-velocity-2)))); continue))))
@@ -126,26 +146,17 @@
                  :da -0.15
                  :min-ticks 121
                  :max-ticks 3600)]
-    (assoc @bullet-texture
-           :enemy-bullet? true
+    (assoc @med-bullet-texture
            :id (c/uuid)
            :render-layer 60
            :x (c/screen-to-world x)
            :y (c/screen-to-world y)
            :angle a
-           :width (c/screen-to-world 8)
-           :height (c/screen-to-world 8)
-           :translate-x (- (c/screen-to-world 4))
-           :translate-y (- (c/screen-to-world 4))
            :collider {:x (c/screen-to-world x) :y (c/screen-to-world y) :r (c/screen-to-world 3)}
            :collider-type :circle
            :bullet-hell-fn ;(some-fn linear3 linear4 rotate1 wait2))))
               ;(some-fn linear1 turn1 wait2))))
               (some-fn change-speed0 wait change-speed wait2))))
-
-(defn create-textures []
-  (do
-    (reset! bullet-texture (create-bullet-texture))))
 
 (defn handle-bullet [screen {:keys [bullet-hell-fn] :as entity}]
   (let [bullets (flatten (conj [] (bullet-hell-fn entity)))]

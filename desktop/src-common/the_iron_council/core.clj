@@ -127,7 +127,7 @@
           ;snow (snow/create-snow)]
       (gs/create-textures)
       (bullet/create-textures)
-      (eb/create-textures)
+      (eb/init!)
       []))
        ;snow]))
 
@@ -210,14 +210,15 @@
               entities)
             (= key (key-code :e))
             (let [car (enemy/create-train-car screen entities)]
-              (conj entities car))
+              (prn :e)
+              (conj entities {:bullet-ml? true}));car))
             (= key (key-code :d))
             (do
               (update! screen :debug (not debug))
               entities)
             (= key (key-code :g))
-            (let [gunship (first (filter #(:gunship? %) entities))]
-              (clojure.pprint/pprint gunship)))
+            (let [bullets (filter #(:enemy-bullet? %) entities)]
+              (clojure.pprint/pprint bullets)))
       :paused
       (cond (= key (key-code :p))
             (do
