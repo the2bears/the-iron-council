@@ -1,7 +1,7 @@
 (ns the-iron-council.enemy-bullet
   (:require [play-clj.core :refer [color pixmap! pixmap* pixmap-format shape x y] :as core]
             [play-clj.g2d :refer [texture]]
-            [play-clj.math :refer [circle circle! polygon polygon! vector-2]]
+            [play-clj.math :refer [circle circle! polygon polygon! vector-2 vector-2!]]
             [the-iron-council.bullet-hell :as bh]
             [the-iron-council.common :as c]
             [the-iron-council.utils :as utils]))
@@ -12,7 +12,7 @@
 (def med-bullet-rects [[(color 1.0 0 1.0 1) [2 0 4 8 1 1 6 6 0 2 8 4]]
                        [(color 1.0 0.5 1.0 1) [2 1 4 6 1 2 6 4]]
                        [(color :white) [3 1 2 6 2 2 4 4 1 3 6 2]]])
-(def long-bullet-rects [[(color 1.0 0 1.0 1) [8 1 4 8 9 0 2 10]]
+(def long-bullet-rects [[(color 1.0 0 1.0 1) [8 2 4 6 9 0 2 10]]
                         [(color 1.0 0.5 1.0 1) [9 1 2 8]]
                         [(color :white) [9 2 2 6]]])
 
@@ -92,8 +92,8 @@
                              :max-ticks 61)
         constant-velocity-3 (bh/linear-movement
                              :dx (core/x bullet-velocity-vector)
-                             :dy (core/y bullet-velocity-vector)
-                             :max-ticks 90)]
+                             :dy (core/y bullet-velocity-vector))]
+                             ;:max-ticks 90)]
     (assoc @long-bullet-texture
            :id (c/uuid)
            :x x
@@ -101,8 +101,8 @@
            :angle a
            :collider {:x x :y y :r (c/screen-to-world 2)}
            :collider-type :circle
-           :bullet-hell-fn (some-fn change-speed constant-velocity-2 split continue))));constant-velocity-2)))) ;continue))))
-                            ;constant-velocity-3)))) ; split constant-velocity-2)))); continue))))
+           :bullet-hell-fn (some-fn ;change-speed constant-velocity-2 split continue;constant-velocity-2)))) ;continue))))
+                             constant-velocity-3)))) ; split constant-velocity-2)))); continue))))
 
 (defn test-bullet!
   [screen x y a]
@@ -167,3 +167,33 @@
           (when (in-bounds bullet)
                 (recur (rest bullets) (conj acc (assoc bullet :collider (assoc collider :x x :y y))))))
         acc))))
+
+(defn start-rapid-fire [screen entities {:keys [id] :as source}]
+  {:bullet-hell? true
+   :id (c/uuid)
+   :ticks 0
+   :ticks-between-shots 5
+   :shots 0
+   :total-shots 4
+   :source-id id
+   :target-id :gunship})
+
+(defn handle-bullet-hell [screen entities {:keys [id ticks ticks-between-shots shots total-shots source-id target-id] :as entity}]
+  (if-let [{:keys [x y angle] :as source-entity} (first (filter #(= source-id (:id %)) entities))]
+    (let [bullet-velocity-vector2 (vector-2 0 (* bullet-speed2 2) :rotate angle);(mod angle 360))
+          constant-velocity (bh/linear-movement
+                             :dx (core/x bullet-velocity-vector2)
+                             :dy (core/y bullet-velocity-vector2))
+          fire? (= 0 (mod ticks ticks-between-shots))]
+      [(when fire?
+          (assoc @long-bullet-texture
+                   :id (c/uuid)
+                   :x x
+                   :y y
+                   :angle angle; (mod angle 360)
+                   :collider {:x x :y y :r (c/screen-to-world 2)}
+                   :collider-type :circle
+                   :bullet-hell-fn (some-fn constant-velocity)))
+       (when (< shots total-shots)
+         (assoc entity :ticks (inc ticks)
+                       :shots (if fire? (inc shots) shots)))])))

@@ -142,13 +142,6 @@
     ;(clojure.core/ppritest-cannon)
     [train-car test-cannon])))
 
-(comment  
-  (def way-points [[0 (/ (c/screen-to-world test-side) 2)]
-                   [(/ (c/screen-to-world test-side) 2) (/ (c/screen-to-world test-side) 2)]
-                   [(- (/ (c/screen-to-world test-side) 2)) (/ (c/screen-to-world test-side) 2)]
-                   [0 (- (/ (c/screen-to-world test-side) 2))]])
-  (def angle 20))
-
 (defn- updated-way-point [way-point angle]  
   (let [wp-x (first way-point)
         wp-y (second way-point)
@@ -185,12 +178,13 @@
                              (if (< angle-diff 180) + -))
         adjusted-way-point (updated-way-point (get way-points way-points-index) p-angle)
         new-x (+ p-x (first adjusted-way-point))
-        new-y (+ p-y (second adjusted-way-point))]
-    [(when (or (= 0 (mod enemy-ticks 180))
-               (= 0 (mod (+ 20 enemy-ticks) 180)))
-       (eb/fire-turret-bullet screen x y angle))
+        new-y (+ p-y (second adjusted-way-point))
+        new-a (if (< angle-diff 1.0) angle (angle-delta-fn angle 0.8))]
+    [(when (= 0 (mod enemy-ticks 180))
+       (eb/start-rapid-fire screen entities entity))
+       ;(eb/fire-turret-bullet screen x y angle))
      (assoc entity
-           :angle (angle-delta-fn angle 0.8) ;angle-to-gunship ;(- (:angle entity) 0.2)
+           :angle new-a
            :x new-x
            :y new-y
            :enemy-ticks (inc enemy-ticks)
@@ -264,7 +258,7 @@
                            :render-layer 6
                            :width (c/screen-to-world 12)
                            :height (c/screen-to-world 16)
-                           :parent-id uuid
+                           :id (c/uuid)
                            :test-cannon? true
                            :armament? true
                            :enemy? true

@@ -39,6 +39,7 @@
        (map (fn [entity]
               (cond (:gunship? entity) (gs/move-player-tick screen entities entity)
                     (:bullet? entity) (bullet/move-bullet screen entity)
+                    (:bullet-hell? entity) (eb/handle-bullet-hell screen entities entity)
                     (:enemy-bullet? entity) (eb/handle-bullet screen entity)
                     ;(:enemy? entity) (enemy/move-enemy screen entity)
                     (or (:track? entity) (:rail? entity)) (tr/move-track screen entity)
@@ -227,6 +228,10 @@
             (= key (key-code :d))
             (do
               (update! screen :debug (not debug))
+              entities)
+            (= key (key-code :g))
+            (let [bullets (filter #(:enemy-bullet? %) entities)]
+              (clojure.pprint/pprint bullets)
               entities))))
       ;entities))
 
