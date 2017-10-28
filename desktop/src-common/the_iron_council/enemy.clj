@@ -20,8 +20,8 @@
 
 (def cannon-side (c/screen-to-world 16))
 
-(def train-car-texture (atom nil))
-(def cannon-texture (atom nil))
+(def train-car-entity (atom nil))
+(def cannon-entity (atom nil))
 (def darkest (color :black))
 (def dark (color 0 29/255 71/255 1))
 (def dark-highlight (color 55/255 75/255 91/255 1))
@@ -34,6 +34,43 @@
 (def cannon-rects [[(color :blue) [0 4 12 12]]
                    [(color :white) [4 0 4 10]]])
 
+(defn make-targeting-rotation-fn [target-id angle-delta]
+  (fn [entities _ {:keys [x y angle] :as entity}]
+    (let [target (first (filter #(= target-id (:id %)) entities))
+          t-x (or (:x target) x)
+          t-y (or (:y target) y)
+          angle-to-target (vector-2! (vector-2! (vector-2 t-x t-y) :sub (vector-2 x y)) :angle)
+          angle-to-target (if target (mod (- angle-to-target 90) 360) 180)
+          angle (+ angle 360)
+          angle-diff (mod (- angle-to-target angle) 360)
+          angle-delta-fn (cond (> angle-to-target angle)
+                               (if (< angle-diff 180) - +)
+                               :else
+                               (if (< angle-diff 180) + -))
+          new-a (if (< angle-diff angle-delta) angle-to-target (angle-delta-fn angle angle-delta))]
+      (assoc entity :angle new-a))))
+
+(def cannon-target-fn (make-targeting-rotation-fn :gunship 0.8))
+
+(defn parent-angle-fn [_ parent entity]
+  (assoc entity :angle (:angle parent)))
+
+(defn- create-cannon-entity []
+  (let [pix-map (pixmap* 16 16 (pixmap-format :r-g-b-a8888))]
+    (doseq [color-set cannon-rects]
+      (doseq [[x y w h] (partition 4 (second color-set))]
+        (utils/pix-map-rect pix-map (first color-set) x y w h)))
+    (reset! cannon-entity (assoc (texture pix-map :set-region 0 0 12 16)
+                                 :render-layer 6
+                                 :width (c/screen-to-world 12)
+                                 :height (c/screen-to-world 16)
+                                 :armament? true
+                                 :enemy? true
+                                 :update-angle-fn cannon-target-fn
+                                 :translate-x (- (/ (c/screen-to-world 12) 2))
+                                 :translate-y (- (/ (c/screen-to-world 16) 2))
+                                 :collider-type :multi))))
+
 (defn- train-bolt-strip [pix-map x y w h]
   (doto pix-map
     (utils/pix-map-rect dark x y w h)
@@ -42,39 +79,24 @@
   (doseq [x (range x w 4)]
     (utils/pix-map-rect pix-map darkest x (inc y) 1 1)))
 
-(defn- create-cannon-texture []
-  (let [pix-map (pixmap* 16 16 (pixmap-format :r-g-b-a8888))]
-    (doseq [color-set cannon-rects]
-      (doseq [[x y w h] (partition 4 (second color-set))]
-        (utils/pix-map-rect pix-map (first color-set) x y w h)))
-    (reset! cannon-texture (assoc (texture pix-map :set-region 0 0 12 16)
-                                  :render-layer 6
-                                  :width (c/screen-to-world 12)
-                                  :height (c/screen-to-world 16)
-                                  :armament? true
-                                  :enemy? true
-                                  :translate-x (- (/ (c/screen-to-world 12) 2))
-                                  :translate-y (- (/ (c/screen-to-world 16) 2))
-                                  :collider-type :multi))))
-
-(defn- create-train-car-texture []
+(defn- create-train-car-entity []
   (let [pix-map (pixmap* 128 128 (pixmap-format :r-g-b-a8888))]
     (doseq [color-set train-rects]
       (doseq [[x y w h] (partition 4 (second color-set))]
         (utils/pix-map-rect pix-map (first color-set) x y w h)))
     (doseq [y [16 34 52]]
       (train-bolt-strip pix-map 0 y 36 4))
-    (reset! train-car-texture (assoc (texture pix-map :set-region 0 0 train-car-width train-car-length)
-                                     :render-layer 5
-                                     :width train-car-width-adj
-                                     :height train-car-length-adj
-                                     :translate-x (- train-car-width-offset)
-                                     :translate-y (- train-car-length-offset)
-                                     :car? true))))
+    (reset! train-car-entity (assoc (texture pix-map :set-region 0 0 train-car-width train-car-length)
+                                    :render-layer 5
+                                    :width train-car-width-adj
+                                    :height train-car-length-adj
+                                    :translate-x (- train-car-width-offset)
+                                    :translate-y (- train-car-length-offset)
+                                    :car? true))))
 
 (defn create-textures []
-  (create-train-car-texture)
-  (create-cannon-texture))
+  (create-train-car-entity)
+  (create-cannon-entity))
 
 (defn update-collider
   "Create a polygon, with rotation around x,y (the cars center).
@@ -115,37 +137,24 @@
 (defn handle-test-bundle [screen {:keys [angle entities way-points] :as entity}]
     (assoc entity :angle (+ 0.3 (:angle entity))))
 
-(defn handle-armament [screen entities {:keys [x y angle collider parent-id way-points-index enemy-ticks] :or {enemy-ticks 1} :as entity}]
+(defn handle-armament [screen entities {:keys [angle collider parent-id way-points-index enemy-ticks update-angle-fn] :or {enemy-ticks 1} :as entity}]
   (let [{:keys [way-points] :as parent} (first (filter #(= parent-id (:id %)) entities))
-        gunship (first (filter #(:gunship? %) entities))
         p-x (:x parent)
         p-y (:y parent)
-        g-x (or (:x gunship)
-                x)
-        g-y (or (:y gunship)
-                y)
-        angle-to-gunship (vector-2! (vector-2! (vector-2 g-x g-y) :sub (vector-2 x y)) :angle)
-        angle-to-gunship (if gunship (mod (- angle-to-gunship 90) 360) 180)
-        angle (+ angle 360)
         p-angle (:angle parent)
-        angle-diff (mod (- angle-to-gunship angle) 360)
-        angle-delta-fn (cond (> angle-to-gunship angle)
-                             (if (< angle-diff 180) - +)
-                             :else
-                             (if (< angle-diff 180) + -))
         adjusted-way-point (updated-way-point (get way-points way-points-index) p-angle)
         new-x (+ p-x (first adjusted-way-point))
-        new-y (+ p-y (second adjusted-way-point))
-        new-a (if (< angle-diff 1.0) angle (angle-delta-fn angle 0.8))]
+        new-y (+ p-y (second adjusted-way-point))]
     [(when (= 0 (mod enemy-ticks 180))
        (eb/start-rapid-fire screen entities entity))
        ;(eb/fire-turret-bullet screen x y angle))
-     (assoc entity
-           :angle new-a
-           :x new-x
-           :y new-y
-           :enemy-ticks (inc enemy-ticks)
-           :collider (map #(update-collider new-x new-y angle %) collider))]))    
+     (let [entity (->> entity
+                       (update-angle-fn entities parent))]
+       (assoc entity
+         :x new-x
+         :y new-y
+         :enemy-ticks (inc enemy-ticks)
+         :collider (map #(update-collider new-x new-y angle %) collider)))]))    
   
 (defn assign-track
   [train-car screen entities]
@@ -187,7 +196,7 @@
 (defn create-train-car
  ([screen entities]
   (let [uuid (c/uuid)
-        train-car (-> @train-car-texture
+        train-car (-> @train-car-entity
                       (assoc :train? true
                              :enemy? true
                              :id uuid
@@ -198,7 +207,7 @@
                                           [0 (- (/ cannon-side 2))]])
                       (assign-track screen entities)
                       (assign-armaments screen entities))
-        cannon  (-> @cannon-texture
+        cannon  (-> @cannon-entity
                     (assoc :angle 0
                            :id (c/uuid)
                            :way-points-index 0

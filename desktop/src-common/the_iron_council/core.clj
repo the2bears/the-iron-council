@@ -129,6 +129,7 @@
           ;snow (snow/create-snow)]
       (gs/create-textures)
       (enemy/create-textures)
+      (etest/create-textures)
       (bullet/create-textures)
       (eb/init!)
       []))
