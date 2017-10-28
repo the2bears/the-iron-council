@@ -55,6 +55,23 @@
 (defn parent-angle-fn [_ parent entity]
   (assoc entity :angle (:angle parent)))
 
+(defn- updated-way-point [way-point angle]
+  (let [wp-x (first way-point)
+        wp-y (second way-point)
+        v (vector-2! (vector-2 wp-x wp-y) :rotate angle)]
+    [(core/x v) (core/y v)])) ;(c/screen-to-world 1)))
+
+(defn waypoint-position-fn [_ {:keys [x y angle way-points] :as parent} {:keys [way-points-index] :as entity}]
+  (let [adjusted-way-point (updated-way-point (get way-points way-points-index) angle)
+        new-x (+ x (first adjusted-way-point))
+        new-y (+ y (second adjusted-way-point))]
+    (assoc entity
+           :x new-x
+           :y new-y)))
+
+(defn parent-pos-fn [_ {:keys [x y] :as parent} entity]
+  (assoc entity :x x :y y))
+
 (defn- create-cannon-entity []
   (let [pix-map (pixmap* 16 16 (pixmap-format :r-g-b-a8888))]
     (doseq [color-set cannon-rects]
@@ -67,6 +84,7 @@
                                  :armament? true
                                  :enemy? true
                                  :update-angle-fn cannon-target-fn
+                                 :update-pos-fn waypoint-position-fn
                                  :translate-x (- (/ (c/screen-to-world 12) 2))
                                  :translate-y (- (/ (c/screen-to-world 16) 2))
                                  :collider-type :multi))))
@@ -128,33 +146,25 @@
          :y (+ y (second (get way-points way-points-index)))
          :parent-id id))
 
-(defn- updated-way-point [way-point angle]  
-  (let [wp-x (first way-point)
-        wp-y (second way-point)
-        v (vector-2! (vector-2 wp-x wp-y) :rotate angle)]
-    [(core/x v) (core/y v)])) ;(c/screen-to-world 1)))
-
 (defn handle-test-bundle [screen {:keys [angle entities way-points] :as entity}]
     (assoc entity :angle (+ 0.3 (:angle entity))))
 
-(defn handle-armament [screen entities {:keys [angle collider parent-id way-points-index enemy-ticks update-angle-fn] :or {enemy-ticks 1} :as entity}]
-  (let [{:keys [way-points] :as parent} (first (filter #(= parent-id (:id %)) entities))
-        p-x (:x parent)
-        p-y (:y parent)
-        p-angle (:angle parent)
-        adjusted-way-point (updated-way-point (get way-points way-points-index) p-angle)
-        new-x (+ p-x (first adjusted-way-point))
-        new-y (+ p-y (second adjusted-way-point))]
+(defn handle-armament [screen entities {:keys [collider parent-id enemy-ticks update-angle-fn update-pos-fn] :or {enemy-ticks 1
+                                                                                                                  update-angle-fn parent-angle-fn
+                                                                                                                  update-pos-fn parent-pos-fn} :as entity}]
+  (let [{:keys [way-points] :as parent} (first (filter #(= parent-id (:id %)) entities))]
     [(when (= 0 (mod enemy-ticks 180))
        (eb/start-rapid-fire screen entities entity))
        ;(eb/fire-turret-bullet screen x y angle))
      (let [entity (->> entity
-                       (update-angle-fn entities parent))]
+                       (update-angle-fn entities parent)
+                       (update-pos-fn entities parent))]
        (assoc entity
-         :x new-x
-         :y new-y
          :enemy-ticks (inc enemy-ticks)
-         :collider (map #(update-collider new-x new-y angle %) collider)))]))    
+         :collider (map #(update-collider (:x entity)
+                                          (:y entity)
+                                          (:angle entity) %)
+                        collider)))]))
   
 (defn assign-track
   [train-car screen entities]

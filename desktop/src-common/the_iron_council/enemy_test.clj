@@ -30,7 +30,6 @@
                                  :height (c/screen-to-world 64)
                                  :armament? true
                                  :enemy? true
-                                 :update-angle-fn enemy/parent-angle-fn
                                  :translate-x (- (/ (c/screen-to-world 24) 2))
                                  :translate-y (- (/ (c/screen-to-world 64) 2))))))
 
