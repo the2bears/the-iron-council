@@ -72,6 +72,10 @@
 (defn parent-pos-fn [_ {:keys [x y] :as parent} entity]
   (assoc entity :x x :y y))
 
+(defn cannon-attack-fn [screen entities {:keys [enemy-ticks] :or {enemy-ticks 1} :as entity}]
+  (when (= 0 (mod enemy-ticks 180))
+    (eb/start-rapid-fire screen entities entity)))
+
 (defn- create-cannon-entity []
   (let [pix-map (pixmap* 16 16 (pixmap-format :r-g-b-a8888))]
     (doseq [color-set cannon-rects]
@@ -83,6 +87,7 @@
                                  :height (c/screen-to-world 16)
                                  :armament? true
                                  :enemy? true
+                                 :attack-fn cannon-attack-fn
                                  :update-angle-fn cannon-target-fn
                                  :update-pos-fn waypoint-position-fn
                                  :translate-x (- (/ (c/screen-to-world 12) 2))
@@ -149,13 +154,13 @@
 (defn handle-test-bundle [screen {:keys [angle entities way-points] :as entity}]
     (assoc entity :angle (+ 0.3 (:angle entity))))
 
-(defn handle-armament [screen entities {:keys [collider parent-id enemy-ticks update-angle-fn update-pos-fn] :or {enemy-ticks 1
-                                                                                                                  update-angle-fn parent-angle-fn
-                                                                                                                  update-pos-fn parent-pos-fn} :as entity}]
+(defn handle-armament [screen
+                       entities
+                       {:keys [collider parent-id enemy-ticks attack-fn update-angle-fn update-pos-fn] :or {enemy-ticks 1
+                                                                                                            update-angle-fn parent-angle-fn
+                                                                                                            update-pos-fn parent-pos-fn} :as entity}]
   (let [{:keys [way-points] :as parent} (first (filter #(= parent-id (:id %)) entities))]
-    [(when (= 0 (mod enemy-ticks 180))
-       (eb/start-rapid-fire screen entities entity))
-       ;(eb/fire-turret-bullet screen x y angle))
+    [(when attack-fn (attack-fn screen entities entity))
      (let [entity (->> entity
                        (update-angle-fn entities parent)
                        (update-pos-fn entities parent))]
