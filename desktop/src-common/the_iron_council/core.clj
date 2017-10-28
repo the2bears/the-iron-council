@@ -8,6 +8,7 @@
             [the-iron-council.debug-renderer :as debugger]
             [the-iron-council.enemy :as enemy]
             [the-iron-council.enemy-bullet :as eb]
+            [the-iron-council.enemy-test :as etest]
             [the-iron-council.explosion :as exp]
             [the-iron-council.fps :as fps]
             [the-iron-council.gunship :refer :all :as gs]            
@@ -127,6 +128,7 @@
                           :debug false)]
           ;snow (snow/create-snow)]
       (gs/create-textures)
+      (enemy/create-textures)
       (bullet/create-textures)
       (eb/init!)
       []))
@@ -183,7 +185,7 @@
             (let [eb (eb/test-bullet! screen 50 50 0)]
               (conj entities eb))
             (= key (key-code :k))
-            (let [test-car (enemy/create-test screen entities)]
+            (let [test-car (etest/create-test screen entities)]
               (into entities test-car))
             (= key (key-code :l))
             (let [test-car (filter :test-cannon? entities)]
