@@ -117,7 +117,7 @@
                                     :translate-y (- train-car-length-offset)
                                     :car? true))))
 
-(defn create-textures []
+(defn init-entities []
   (create-train-car-entity)
   (create-cannon-entity))
 
@@ -150,9 +150,6 @@
          :x (+ x (first (get way-points way-points-index)))
          :y (+ y (second (get way-points way-points-index)))
          :parent-id id))
-
-(defn handle-test-bundle [screen {:keys [angle entities way-points] :as entity}]
-    (assoc entity :angle (+ 0.3 (:angle entity))))
 
 (defn handle-armament [screen
                        entities

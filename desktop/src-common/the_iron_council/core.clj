@@ -42,13 +42,13 @@
                     (:bullet? entity) (bullet/move-bullet screen entity)
                     (:bullet-hell? entity) (eb/handle-bullet-hell screen entities entity)
                     (:enemy-bullet? entity) (eb/handle-bullet screen entity)
-                    ;(:enemy? entity) (enemy/move-enemy screen entity)
+                    (:drone? entity) (etest/handle-drone screen entities entity)
                     (or (:track? entity) (:rail? entity)) (tr/move-track screen entity)
                     (:explosion? entity) (exp/handle-explosion entity)
                     (:train? entity) (enemy/move-train screen entities entity)
                     (:armament? entity) (enemy/handle-armament screen entities entity)
                     (:snow? entity) (snow/move-snow screen entity)
-                    (:test-bundle? entity) (enemy/handle-test-bundle screen entity)
+                    (:test-bundle? entity) (etest/handle-test-bundle screen entity)
                     :else entity)))))
 
 (defn handle-collisions [{:keys [collisions] :as screen} entities]
@@ -128,7 +128,7 @@
                           :debug false)]
           ;snow (snow/create-snow)]
       (gs/create-textures)
-      (enemy/create-textures)
+      (enemy/init-entities)
       (etest/create-textures)
       (bullet/create-textures)
       (eb/init!)
