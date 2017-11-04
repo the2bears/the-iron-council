@@ -83,9 +83,10 @@
   (let [term (- max-ticks min-ticks)
         sa (vector-2! (vector-2 sx sy) :angle)
         da (/ (- ta sa) term)]
-    (fn [{:keys [x y dx dy ticks] :or {ticks 0} :as bullet}]
+    (fn [{:keys [x y dx dy angle ticks] :or {ticks 0} :as bullet}]
       (when (within-ticks? min-ticks ticks max-ticks)
         (let [v (vector-2! (vector-2 dx dy) :rotate da)
+              a (vector-2! v :angle)
               dx (core/x v)
               dy (core/y v)]
           (assoc bullet
@@ -93,6 +94,7 @@
                  :y (+ y dy)
                  :dx dx
                  :dy dy
+                 :angle a
                  :ticks (inc ticks)))))))
 
 (defn change-speed
