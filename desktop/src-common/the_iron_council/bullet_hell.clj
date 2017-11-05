@@ -36,6 +36,16 @@
              :y (+ y dy)
              :ticks (inc ticks)))))
 
+(defn wait
+  "Waits, with nothing applied to the bullet's map, from min-ticks (default 0) to max-ticks 
+   (default Integer/MAX_VALUE)."
+  [& {:keys [min-ticks max-ticks]
+      :or {min-ticks 0 max-ticks Integer/MAX_VALUE}}]
+  (fn [{:keys [ticks] :as bullet}]
+    (when (within-ticks? min-ticks ticks max-ticks)
+      (assoc bullet
+             :ticks (inc ticks)))))
+
 (defn accel
   "Simple acceleration, from min-ticks (default 0) to max-ticks (default Integer/MAX_VALUE).
    Each tick ax and ay ('a'cceleration) are added to dx and dy ('d'eltas) respectively.
