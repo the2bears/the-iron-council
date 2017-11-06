@@ -16,26 +16,32 @@
 (def train-car-length-adj (c/screen-to-world train-car-length))
 
 (def tarmac-entity (atom nil))
-(def test-entity (atom nil))
+(def drone-entity (atom nil))
 
-(defn launch-test-enemy [_ _ {:keys [x y angle id launch-point enemy-ticks] :or {enemy-ticks 1} :as entity}]
-  (when (= 0 (mod enemy-ticks 600))
+(defn launch-drone [_ _ {:keys [x y angle id launch-point enemy-ticks] :or {enemy-ticks 1} :as entity}]
+  (when (or (= 60 enemy-ticks)
+            (= 120 enemy-ticks)
+            (= 180 enemy-ticks)
+            (= 240 enemy-ticks))
     (let [launch-vector (vector-2 (first launch-point) (second launch-point) :rotate angle)]
-      (assoc @test-entity
+      (assoc @drone-entity
              :x (+ x (core/x launch-vector))
              :y (+ y (core/y launch-vector))
+             :wave-id (quot enemy-ticks 60)
              :angle angle
              :parent-id id))))
 
-(defn- create-test-entity []
+(defn- create-drone-entity []
   (let [pix-map (pixmap* 32 32 (pixmap-format :r-g-b-a8888))]
     (utils/pix-map-rect pix-map (color :white) 0 0 test-side test-side)
-    (reset! test-entity (assoc (texture pix-map :set-region 0 0 test-side test-side)
+    (reset! drone-entity (assoc (texture pix-map :set-region 0 0 test-side test-side)
                                :render-layer 16
                                :width (c/screen-to-world test-side)
                                :height (c/screen-to-world test-side)
                                :drone? true
                                :enemy? true
+                               :drone-state :launch
+                               :oob-exempt? true
                                :translate-x (- (/ (c/screen-to-world test-side) 2))
                                :translate-y (- (/ (c/screen-to-world test-side) 2))))))
 
@@ -49,14 +55,14 @@
                                  :armament? true
                                  :enemy? true
                                  :launch-point [0 (- (c/screen-to-world 20))]
-                                 :launch-length 50
-                                 :attack-fn launch-test-enemy
+                                 :launch-length 48
+                                 :attack-fn launch-drone
                                  :translate-x (- (/ (c/screen-to-world 24) 2))
                                  :translate-y (- (/ (c/screen-to-world 64) 2))))))
 
 (defn create-textures []
   (create-tarmac-entity)
-  (create-test-entity))
+  (create-drone-entity))
 
 (defn create-test
  ([screen entities]
@@ -98,7 +104,16 @@
         da (cond right? -0.3 left? 0.3 :else 0)]
     (assoc entity :angle (+ angle da) :ticks (inc ticks))))
 
-(defn handle-drone [screen entities {:keys [parent-id ticks] :or {ticks 1} :as entity}]
+(defn- oob-then-wait [wrapped-fn limit]
+  (fn[entity]
+    (if-let [entity (wrapped-fn entity)]
+      (if (> (:y entity) limit)
+        (assoc entity
+               :drone-state :wait
+               :bullet-hell-fn (bh/wait))
+        entity))))
+
+(defn- handle-drone-launch [screen entities {:keys [parent-id ticks] :or {ticks 1} :as entity}]
   (let [parent (first (filter #(= parent-id (:id %)) entities))
         x (:x parent)
         y (:y parent)
@@ -120,19 +135,39 @@
              :ticks (inc ticks))
       (let [turn-around (bh/change-direction :sx dx :sy dy :ta 90 :min-ticks (inc ticks) :max-ticks (+ (inc ticks) 60))
             slow-down (bh/change-speed :sx 0 :sy (c/screen-to-world 1.2) :tx 0 :ty (c/screen-to-world 2.4) :min-ticks (+ (inc ticks) 60) :max-ticks (+ (inc ticks) 90))
-            continue (bh/continue)
-            oob-wrapper (fn[wrapped-fn]
-                          (fn[entity]
-                            (when-let [entity (wrapped-fn entity)]
-                              ;(prn :oob-wrapper :ticks (:ticks entity))
-                              entity)))]
+            continue (bh/continue)] 
         (assoc entity
-               :drone? false
-               :guided? true
+               :drone-state :guided
                :x (+ x (core/x launch-point-vector) (* ticks dx))
                :y (+ y (core/y launch-point-vector) (* ticks dy))
                :dx dx
                :dy dy
                :angle angle
                :ticks (inc ticks)
-               :bullet-hell-fn (some-fn (oob-wrapper turn-around) (oob-wrapper slow-down) continue))))))
+               :bullet-hell-fn (oob-then-wait (some-fn turn-around slow-down continue)
+                                              (+ c/game-height-adj (c/screen-to-world 20))))))))
+
+(defn- handle-drone-wait [{:keys [wait-ticks wave-id] :or {wait-ticks 1} :as entity}]
+  (if (< wait-ticks 90)
+    (assoc entity :wait-ticks (inc wait-ticks))
+    (let [_ (prn :handle-drone-wait :attack-run)
+          attack-run (bh/linear-movement
+                      :dx 0
+                      :dy (- (c/screen-to-world 1.5)))
+          x (* wave-id (/ c/game-width-adj 5))]
+      (assoc entity
+             :x x
+             :drone-state :guided
+             :angle 180
+             :bullet-hell-fn (some-fn attack-run)))))
+
+(defn handle-drone [screen entities {:keys [drone-state] :as entity}]
+  (case drone-state
+    :launch
+    (handle-drone-launch screen entities entity)
+    :guided
+    (eb/handle-bullet screen entity)
+    :wait
+    (handle-drone-wait entity)
+    :default entity))
+

@@ -41,7 +41,7 @@
               (cond (:gunship? entity) (gs/move-player-tick screen entities entity)
                     (:bullet? entity) (bullet/move-bullet screen entity)
                     (:bullet-hell? entity) (eb/handle-bullet-hell screen entities entity)
-                    (or (:guided? entity) (:enemy-bullet? entity)) (eb/handle-bullet screen entity)
+                    (:enemy-bullet? entity) (eb/handle-bullet screen entity)
                     (:drone? entity) (etest/handle-drone screen entities entity)
                     (or (:track? entity) (:rail? entity)) (tr/move-track screen entity)
                     (:explosion? entity) (exp/handle-explosion entity)
@@ -189,8 +189,8 @@
             (let [test-car (etest/create-test screen entities)]
               (into entities test-car))
             (= key (key-code :l))
-            (let [test-car (filter :test-cannon? entities)]
-              (pp/pprint test-car)
+            (let [drones (filter :drone? entities)]
+              (pp/pprint drones)
               entities)
             (= key (key-code :d))
             (do

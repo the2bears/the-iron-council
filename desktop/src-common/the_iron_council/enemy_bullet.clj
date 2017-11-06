@@ -28,9 +28,10 @@
 (def left-edge (- c/oob-padding))
 
 (defn- in-bounds [bullet]
-  (if-let [{:keys [x y]} bullet]
-    (and (< left-edge x right-edge)
-         (< lower-edge y upper-edge))))
+  (if-let [{:keys [x y oob-exempt?]} bullet]
+    (or oob-exempt?
+        (and (< left-edge x right-edge)
+             (< lower-edge y upper-edge)))))
 
 (defn- simple-movement
   ([velocity min-ticks max-ticks]
