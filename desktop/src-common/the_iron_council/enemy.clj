@@ -168,7 +168,7 @@
                                           (:angle entity) %)
                         collider)))]))
   
-(defn assign-track
+(defn- assign-track
   [train-car screen entities]
   (let [current-tracks (sort-by :at-ticks (->> entities
                                                (filter :track?)
@@ -189,7 +189,7 @@
            :track-id :main-line
            :i-point-index i-point-index)))
 
-(defn assign-armaments
+(defn- add-guards
   [{:keys [x y angle] :as train-car} screen entities]
   (let [cx 0
         cy (/ train-car-length-offset 2)
@@ -204,6 +204,16 @@
            :collider [indestructible-guard]
            :collider-type :multi)))
 
+(defn- add-armaments
+  [{:keys [x y angle] :as train-car} screen entities]
+  (let [cannon  (-> @cannon-entity
+                    (assoc :angle 0
+                           :id (c/uuid)
+                           :way-points-index 0
+                           :collider [(update-collider (:x train-car) (+ (:y train-car) (/ cannon-side 2))
+                                                       0 0 (:angle train-car) (/ cannon-side 3) (/ cannon-side 3))])
+                    (position-from-parent train-car))]
+    [train-car cannon]))
 
 (defn create-train-car
  ([screen entities]
@@ -218,16 +228,8 @@
                                           [(- (/ cannon-side 2)) (/ cannon-side 2)]
                                           [0 (- (/ cannon-side 2))]])
                       (assign-track screen entities)
-                      (assign-armaments screen entities))
-        cannon  (-> @cannon-entity
-                    (assoc :angle 0
-                           :id (c/uuid)
-                           :way-points-index 0
-                           :collider [(update-collider (:x train-car) (+ (:y train-car) (/ cannon-side 2))
-                                                       0 0 (:angle train-car) (/ cannon-side 3) (/ cannon-side 3))])
-                    (position-from-parent train-car))]
-    [train-car cannon])))
-
+                      (add-guards screen entities))]
+    (add-armaments train-car screen entities))));[train-car cannon])))
 
 (defn- next-track-entity [at-track tracks]
   (let [next-track (first (drop-while #(<= (:at-ticks %) at-track) tracks))]
