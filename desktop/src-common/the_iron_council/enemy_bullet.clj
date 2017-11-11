@@ -105,6 +105,40 @@
            :bullet-hell-fn (some-fn ;change-speed constant-velocity-2 split continue;constant-velocity-2)))) ;continue))))
                              constant-velocity-3)))) ; split constant-velocity-2)))); continue))))
 
+(defn fire-tri-bullets
+  [{:keys [x y fire-tri?] :or {fire-tri? true} :as entity}]
+  (let [bullet-velocity-vector1 (vector-2 0 (* bullet-speed2 3) :rotate 180)
+        bullet-velocity-vector2 (vector-2 0 (* bullet-speed2 3) :rotate 160)
+        bullet-velocity-vector3 (vector-2 0 (* bullet-speed2 3) :rotate 200)
+        constant-velocity1 (bh/linear-movement
+                            :dx (core/x bullet-velocity-vector1)
+                            :dy (core/y bullet-velocity-vector1))
+        constant-velocity2 (bh/linear-movement
+                            :dx (core/x bullet-velocity-vector2)
+                            :dy (core/y bullet-velocity-vector2))
+        constant-velocity3 (bh/linear-movement
+                            :dx (core/x bullet-velocity-vector3)
+                            :dy (core/y bullet-velocity-vector3))
+        base-bullet (assoc @med-bullet-texture
+                           :x x
+                           :y y
+                           :collider {:x x :y y :r (c/screen-to-world 3)}
+                           :collider-type :circle)]
+    (when fire-tri?
+      [(assoc entity :fire-tri? false)
+       (assoc base-bullet
+              :id (c/uuid)
+              :angle 180
+              :bullet-hell-fn (some-fn constant-velocity1))
+       (assoc base-bullet
+              :id (c/uuid)
+              :angle 160
+              :bullet-hell-fn (some-fn constant-velocity2))
+       (assoc base-bullet
+              :id (c/uuid)
+              :angle 200
+              :bullet-hell-fn (some-fn constant-velocity3))])))
+
 (defn test-bullet!
   [screen x y a]
   (let [bullet-velocity-vector (vector-2 0 bullet-speed :rotate a)

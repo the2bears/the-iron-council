@@ -147,19 +147,33 @@
                :bullet-hell-fn (oob-then-wait (some-fn turn-around slow-down continue)
                                               (+ c/game-height-adj (c/screen-to-world 20))))))))
 
-(defn- handle-drone-wait [{:keys [wait-ticks wave-id] :or {wait-ticks 1} :as entity}]
+(defn- handle-drone-wait [{:keys [dx dy ticks wait-ticks wave-id] :or {wait-ticks 1} :as entity}]
   (if (< wait-ticks 90)
     (assoc entity :wait-ticks (inc wait-ticks))
-    (let [_ (prn :handle-drone-wait :attack-run)
+    (let [_ (prn :handle-drone-wait :attack-run :ticks ticks :dx dx :dy dy)
+          sy (- (c/screen-to-world 1.5))
           attack-run (bh/linear-movement
                       :dx 0
                       :dy (- (c/screen-to-world 1.5)))
+          att-run (bh/change-speed
+                   :sy sy
+                   :ty (/ sy 20)
+                   :min-ticks ticks
+                   :max-ticks (+ ticks 90))
+          att-run2 (bh/change-speed
+                    :sy (/ sy 20)
+                    :ty (* 2 sy)
+                    :min-ticks (+ ticks 90)
+                    :max-ticks (+ ticks 150))
+          continue (bh/continue)
           x (* wave-id (/ c/game-width-adj 5))]
       (assoc entity
              :x x
+             :dx 0
+             :dy sy
              :drone-state :guided
              :angle 180
-             :bullet-hell-fn (some-fn attack-run)))))
+             :bullet-hell-fn (some-fn att-run eb/fire-tri-bullets att-run2 continue))))) ; (some-fn attack-run)))))
 
 (defn handle-drone [screen entities {:keys [drone-state] :as entity}]
   (case drone-state
