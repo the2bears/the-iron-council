@@ -6,6 +6,7 @@
             [the-iron-council.collision :as collision]
             [the-iron-council.common :as c]
             [the-iron-council.debug-renderer :as debugger]
+            [the-iron-council.drone :as drone]
             [the-iron-council.enemy :as enemy]
             [the-iron-council.enemy-bullet :as eb]
             [the-iron-council.enemy-test :as etest]
@@ -42,7 +43,7 @@
                     (:bullet? entity) (bullet/move-bullet screen entity)
                     (:bullet-hell? entity) (eb/handle-bullet-hell screen entities entity)
                     (:enemy-bullet? entity) (eb/handle-bullet screen entity)
-                    (:drone? entity) (etest/handle-drone screen entities entity)
+                    (:drone? entity) (drone/handle-drone screen entities entity)
                     (or (:track? entity) (:rail? entity)) (tr/move-track screen entity)
                     (:explosion? entity) (exp/handle-explosion entity)
                     (:train? entity) (enemy/move-train screen entities entity)
@@ -129,7 +130,7 @@
           ;snow (snow/create-snow)]
       (gs/create-textures)
       (enemy/init-entities)
-      (etest/create-textures)
+      (drone/create-textures)
       (bullet/create-textures)
       (eb/init!)
       []))
@@ -186,7 +187,7 @@
             (let [eb (eb/test-bullet! screen 50 50 0)]
               (conj entities eb))
             (= key (key-code :k))
-            (let [test-car (etest/create-test screen entities)]
+            (let [test-car (drone/create-drone-carrier screen entities)]
               (into entities test-car))
             (= key (key-code :l))
             (let [drones (filter :drone? entities)]

@@ -204,8 +204,8 @@
            :collider [indestructible-guard]
            :collider-type :multi)))
 
-(defn- add-armaments
-  [{:keys [x y angle] :as train-car} screen entities]
+(defn- add-cannon
+  [train-car screen entities]
   (let [cannon  (-> @cannon-entity
                     (assoc :angle 0
                            :id (c/uuid)
@@ -214,6 +214,10 @@
                                                        0 0 (:angle train-car) (/ cannon-side 3) (/ cannon-side 3))])
                     (position-from-parent train-car))]
     [train-car cannon]))
+
+(defn- add-armaments
+  [train-car screen entities]
+  (add-cannon train-car screen entities))
 
 (defn create-train-car
  ([screen entities]
@@ -229,7 +233,7 @@
                                           [0 (- (/ cannon-side 2))]])
                       (assign-track screen entities)
                       (add-guards screen entities))]
-    (add-armaments train-car screen entities))));[train-car cannon])))
+    (add-armaments train-car screen entities))))
 
 (defn- next-track-entity [at-track tracks]
   (let [next-track (first (drop-while #(<= (:at-ticks %) at-track) tracks))]
