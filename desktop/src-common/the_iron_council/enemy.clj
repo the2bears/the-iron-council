@@ -3,6 +3,7 @@
             [play-clj.g2d :refer [texture]]
             [play-clj.math :refer [circle circle! polygon polygon! rectangle rectangle! vector-2 vector-2!]]
             [the-iron-council.common :as c]
+            [the-iron-council.drone :as drone]
             [the-iron-council.enemy-bullet :as eb]
             [the-iron-council.utils :as utils]))
 
@@ -72,9 +73,12 @@
 (defn parent-pos-fn [_ {:keys [x y] :as parent} entity]
   (assoc entity :x x :y y))
 
-(defn cannon-attack-fn [screen entities {:keys [enemy-ticks] :or {enemy-ticks 1} :as entity}]
-  (when (= 0 (mod enemy-ticks 180))
-    (eb/start-rapid-fire screen entities entity)))
+(defn cannon-attack-fn [screen entities {:keys [enemy-ticks] :or {enemy-ticks 0} :as entity}]
+  (let [enemy-ticks (inc enemy-ticks)
+        entity (assoc entity :enemy-ticks enemy-ticks)]
+    (if (= 0 (mod enemy-ticks 180))
+      [entity (eb/start-rapid-fire screen entities entity)]
+      entity)))
 
 (defn- create-cannon-entity []
   (let [pix-map (pixmap* 16 16 (pixmap-format :r-g-b-a8888))]
@@ -145,29 +149,22 @@
       :w width-offset
       :collider-type :poly})))
 
-(defn position-from-parent [{:keys [way-points-index] :as child} {:keys [x y id way-points] :as parent}]
-  (assoc child
-         :x (+ x (first (get way-points way-points-index)))
-         :y (+ y (second (get way-points way-points-index)))
-         :parent-id id))
-
 (defn handle-armament [screen
                        entities
                        {:keys [collider parent-id enemy-ticks attack-fn update-angle-fn update-pos-fn] :or {enemy-ticks 1
                                                                                                             update-angle-fn parent-angle-fn
                                                                                                             update-pos-fn parent-pos-fn} :as entity}]
-  (let [{:keys [way-points] :as parent} (first (filter #(= parent-id (:id %)) entities))]
-    [(when attack-fn (attack-fn screen entities entity))
-     (let [entity (->> entity
+  (let [parent (first (filter #(= parent-id (:id %)) entities))
+        entity (->> entity
                        (update-angle-fn entities parent)
-                       (update-pos-fn entities parent))]
-       (assoc entity
-         :enemy-ticks (inc enemy-ticks)
-         :collider (map #(update-collider (:x entity)
-                                          (:y entity)
-                                          (:angle entity) %)
-                        collider)))]))
-  
+                       (update-pos-fn entities parent))
+        entity (assoc entity
+                      :collider (map #(update-collider (:x entity)
+                                                       (:y entity)
+                                                       (:angle entity) %)
+                                     collider))]
+    (attack-fn screen entities entity)))
+
 (defn- assign-track
   [train-car screen entities]
   (let [current-tracks (sort-by :at-ticks (->> entities
@@ -212,12 +209,15 @@
                            :way-points-index 0
                            :collider [(update-collider (:x train-car) (+ (:y train-car) (/ cannon-side 2))
                                                        0 0 (:angle train-car) (/ cannon-side 3) (/ cannon-side 3))])
-                    (position-from-parent train-car))]
+                    (utils/position-from-parent train-car))]
     [train-car cannon]))
+
+(def armaments [drone/add-drone-carrier add-cannon])
 
 (defn- add-armaments
   [train-car screen entities]
-  (add-cannon train-car screen entities))
+  (let [armament-fn (rand-nth armaments)]
+    (armament-fn train-car screen entities)))
 
 (defn create-train-car
  ([screen entities]

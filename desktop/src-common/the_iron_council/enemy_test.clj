@@ -37,7 +37,7 @@
                                :collider [(enemy/update-collider x (+ y (/ (c/screen-to-world test-side) 2))
                                                                  0 0 a
                                                                  (/ (c/screen-to-world test-side) 3) (/ (c/screen-to-world test-side) 3))])
-                        (enemy/position-from-parent train-car))]
+                        (utils/position-from-parent train-car))]
     [train-car test-cannon])))
 
 (defn handle-test-bundle [screen {:keys [angle ticks] :or {ticks 75} :as entity}]

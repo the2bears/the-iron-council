@@ -5,7 +5,7 @@
             [the-iron-council.bullet-hell :as bh]
             [the-iron-council.common :as c]
             [the-iron-council.enemy-bullet :as eb]
-            [the-iron-council.enemy :as enemy]
+;            [the-iron-council.enemy :as enemy]
             [the-iron-council.utils :as utils]))
 
 (def test-side 16)
@@ -18,18 +18,23 @@
 (def tarmac-entity (atom nil))
 (def drone-entity (atom nil))
 
-(defn- launch-drone [_ _ {:keys [x y angle id launch-point enemy-ticks] :or {enemy-ticks 1} :as entity}]
-  (when (or (= 60 enemy-ticks)
+(defn- launch-drone [_ _ {:keys [x y angle id launch-point enemy-ticks] :or {enemy-ticks 0} :as entity}]
+  (let [;_ (prn :launch-drone :y y)
+        enemy-ticks (if (< y (- c/game-height-adj (c/screen-to-world 60))) (inc enemy-ticks) enemy-ticks)
+        entity (assoc entity :enemy-ticks enemy-ticks)]
+    (if (or (= 60 enemy-ticks)
             (= 120 enemy-ticks)
             (= 180 enemy-ticks)
             (= 240 enemy-ticks))
-    (let [launch-vector (vector-2 (first launch-point) (second launch-point) :rotate angle)]
-      (assoc @drone-entity
-             :x (+ x (core/x launch-vector))
-             :y (+ y (core/y launch-vector))
-             :wave-id (quot enemy-ticks 60)
-             :angle angle
-             :parent-id id))))
+      (let [launch-vector (vector-2 (first launch-point) (second launch-point) :rotate angle)]
+        [(assoc @drone-entity
+                :x (+ x (core/x launch-vector))
+                :y (+ y (core/y launch-vector))
+                :wave-id (quot enemy-ticks 60)
+                :angle angle
+                :parent-id id)
+         entity])
+      entity)))
 
 (defn- create-drone-entity []
   (let [pix-map (pixmap* 32 32 (pixmap-format :r-g-b-a8888))]
@@ -55,7 +60,7 @@
                                  :armament? true
                                  :enemy? true
                                  :launch-point [0 (- (c/screen-to-world 20))]
-                                 :launch-length 48
+                                 :launch-length 58
                                  :attack-fn launch-drone
                                  :translate-x (- (/ (c/screen-to-world 24) 2))
                                  :translate-y (- (/ (c/screen-to-world 64) 2))))))
@@ -71,7 +76,7 @@
                    (assoc :angle 0
                           :id (c/uuid)
                           :way-points-index 0)
-                   (enemy/position-from-parent train-car))]
+                   (utils/position-from-parent train-car))]
     [train-car
      tarmac]))
 
@@ -83,12 +88,11 @@
         translate-y (/ (- (c/screen-to-world test-side)) 1)
         x (/ c/game-width-adj 2)
         y (/ c/game-height-adj 4)
-        train-car (-> @enemy/train-car-entity
+        train-car (-> {};@enemy/train-car-entity
                       (assoc :x x
                              :y y
                              :angle a
-                             :id uuid
-                             :test-bundle? true))]
+                             :id uuid))]
     (add-drone-carrier train-car screen entities))))
 
 (defn- oob-then-wait [wrapped-fn limit]
@@ -122,7 +126,7 @@
              :ticks (inc ticks))
       (let [turn-around (bh/change-direction :sx dx :sy dy :ta 90 :min-ticks (inc ticks) :max-ticks (+ (inc ticks) 60))
             slow-down (bh/change-speed :sx 0 :sy (c/screen-to-world 1.2) :tx 0 :ty (c/screen-to-world 2.4) :min-ticks (+ (inc ticks) 60) :max-ticks (+ (inc ticks) 90))
-            continue (bh/continue)] 
+            continue (bh/continue)]
         (assoc entity
                :drone-state :guided
                :x (+ x (core/x launch-point-vector) (* ticks dx))
@@ -137,8 +141,7 @@
 (defn- handle-drone-wait [{:keys [dx dy ticks wait-ticks wave-id] :or {wait-ticks 1} :as entity}]
   (if (< wait-ticks 90)
     (assoc entity :wait-ticks (inc wait-ticks))
-    (let [_ (prn :handle-drone-wait :attack-run :ticks ticks :dx dx :dy dy)
-          sy (- (c/screen-to-world 3))
+    (let [sy (- (c/screen-to-world 3))
           attack-run (bh/linear-movement
                       :dx 0
                       :dy (- (c/screen-to-world 1.5)))

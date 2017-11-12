@@ -29,6 +29,7 @@
 (defn on-new-game [screen entities]
   (let [screen (update! screen
                  :game-state :in-game
+                 :slow-speed false
                  :p1-lives 3
                  :ticks 0
                  :level 1)]
@@ -137,14 +138,14 @@
        ;snow]))
 
   :on-render
-  (fn [{:keys [debug] :as screen} entities]
+  (fn [{:keys [debug slow-speed] :as screen} entities]
     (let [camera (:camera screen)
           ticks (:ticks screen)
           game-state (:game-state screen)]
       (clear! 0.1 0.1 0.12 1)
       (cond (not (= :paused game-state))
             (do
-              ;(Thread/sleep 50)
+              (when slow-speed (Thread/sleep 50))
               (update! screen :ticks (inc (:ticks screen)))
               (let [entities
                     (->> entities
@@ -179,6 +180,10 @@
       :attract-mode
       (cond (= key (key-code :num-1))
             (on-new-game screen entities)
+            (= key (key-code :s))
+            (do
+              (update! screen :slow-speed (not (:slow-speed screen)))
+              entities)
             (= key (key-code :o))
             (do
               (update! screen :option-type (if (= option-type :gatling) :rocket :gatling))
@@ -198,7 +203,11 @@
               (update! screen :debug (not debug))
               entities))
       :in-game
-      (cond (= key (key-code :p))
+      (cond (= key (key-code :s))
+            (do
+              (update! screen :slow-speed (not (:slow-speed screen)))
+              entities)
+            (= key (key-code :p))
             (do
               (update! screen :game-state :paused)
               entities)
