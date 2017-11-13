@@ -34,15 +34,18 @@
                         (assoc :angle 180
                                :test-cannon? true
                                :way-points-index 0
-                               :collider [(enemy/update-collider x (+ y (/ (c/screen-to-world test-side) 2))
+                               :collider [(utils/update-collider x (+ y (/ (c/screen-to-world test-side) 2))
                                                                  0 0 a
                                                                  (/ (c/screen-to-world test-side) 3) (/ (c/screen-to-world test-side) 3))])
                         (utils/position-from-parent train-car))]
     [train-car test-cannon])))
 
-(defn handle-test-bundle [screen {:keys [angle ticks] :or {ticks 75} :as entity}]
+(defn handle-test-bundle [screen {:keys [y angle ticks] :or {ticks 75} :as entity}]
   (let [right?  (key-pressed? :dpad-right)
         left? (key-pressed? :dpad-left)
-        da (cond right? -0.3 left? 0.3 :else 0)]
-    (assoc entity :angle (+ angle da) :ticks (inc ticks))))
+        up? (key-pressed? :dpad-up)
+        down? (key-pressed? :dpad-down)
+        da (cond right? -0.3 left? 0.3 :else 0)
+        dy (cond up? 0.05 down? -0.05 :else 0)]
+    (assoc entity :y (+ y dy) :angle (+ angle da) :ticks (inc ticks))))
 

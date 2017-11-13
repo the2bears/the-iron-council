@@ -5,7 +5,6 @@
             [the-iron-council.bullet-hell :as bh]
             [the-iron-council.common :as c]
             [the-iron-council.enemy-bullet :as eb]
-;            [the-iron-council.enemy :as enemy]
             [the-iron-council.utils :as utils]))
 
 (def test-side 16)

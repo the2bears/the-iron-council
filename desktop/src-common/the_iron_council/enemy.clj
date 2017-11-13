@@ -125,30 +125,6 @@
   (create-train-car-entity)
   (create-cannon-entity))
 
-(defn update-collider
-  "Create a polygon, with rotation around x,y (the cars center).
-   The polygon itself is a rectangle, centered at cx, cy which are
-   offsets from x,y. l and w are 1/2 lengths and widths of a side,
-   respectively"
-  ([x y a {:keys [cx cy l w] :as c-map}]
-   (update-collider x y cx cy a w l))
-  ([x y cx cy a width-offset len-offset]
-   (let [rx (+ x cx)
-         ry (+ y cy)
-         poly-verts (float-array [(- rx width-offset) (- ry len-offset)
-                                  (+ rx width-offset) (- ry len-offset)
-                                  (+ rx width-offset) (+ ry len-offset)
-                                  (- rx width-offset) (+ ry len-offset)])
-         poly (polygon poly-verts)]
-     (polygon! poly :set-origin x y)
-     (polygon! poly :set-rotation a)
-     {:collider (polygon (polygon! poly :get-transformed-vertices))
-      :cx cx
-      :cy cy
-      :l len-offset
-      :w width-offset
-      :collider-type :poly})))
-
 (defn handle-armament [screen
                        entities
                        {:keys [collider parent-id enemy-ticks attack-fn update-angle-fn update-pos-fn] :or {enemy-ticks 1
@@ -159,9 +135,9 @@
                        (update-angle-fn entities parent)
                        (update-pos-fn entities parent))
         entity (assoc entity
-                      :collider (map #(update-collider (:x entity)
-                                                       (:y entity)
-                                                       (:angle entity) %)
+                      :collider (map #(utils/update-collider (:x entity)
+                                                             (:y entity)
+                                                             (:angle entity) %)
                                      collider))]
     (attack-fn screen entities entity)))
 
@@ -190,13 +166,13 @@
   [{:keys [x y angle] :as train-car} screen entities]
   (let [cx 0
         cy (/ train-car-length-offset 2)
-        indestructible-guard (update-collider x
-                                              y
-                                              (- train-car-width-offset (/ indestructible-collider-width 2))
-                                              0
-                                              angle
-                                              (/ indestructible-collider-width 2)
-                                              (/ indestructible-collider-length 2))]
+        indestructible-guard (utils/update-collider x
+                                                    y
+                                                    (- train-car-width-offset (/ indestructible-collider-width 2))
+                                                    0
+                                                    angle
+                                                    (/ indestructible-collider-width 2)
+                                                    (/ indestructible-collider-length 2))]
     (assoc train-car
            :collider [indestructible-guard]
            :collider-type :multi)))
@@ -207,8 +183,8 @@
                     (assoc :angle 0
                            :id (c/uuid)
                            :way-points-index 0
-                           :collider [(update-collider (:x train-car) (+ (:y train-car) (/ cannon-side 2))
-                                                       0 0 (:angle train-car) (/ cannon-side 3) (/ cannon-side 3))])
+                           :collider [(utils/update-collider 0 0 ;will use way-points later anyway
+                                                             0 0 (:angle train-car) (/ cannon-side 3) (/ cannon-side 3))])
                     (utils/position-from-parent train-car))]
     [train-car cannon]))
 
@@ -231,8 +207,8 @@
                                           [(/ cannon-side 2) (/ cannon-side 2)]
                                           [(- (/ cannon-side 2)) (/ cannon-side 2)]
                                           [0 (- (/ cannon-side 2))]])
-                      (assign-track screen entities)
-                      (add-guards screen entities))]
+                      (assign-track screen entities))]
+                      ;(add-guards screen entities))]
     (add-armaments train-car screen entities))))
 
 (defn- next-track-entity [at-track tracks]
@@ -255,7 +231,7 @@
             next-a (if (nil? next-track) 0.0 (:angle next-track))
             d-a (- next-a angle)
             angle-offset (* d-a (/ i-point-index (count i-points)))
-            new-collider (map #(update-collider x y (+ angle angle-offset) %) collider)]
+            new-collider (map #(utils/update-collider x y (+ angle angle-offset) %) collider)]
         (let [entity (assoc entity
                             :x x :y y :i-point-index (if get-next 0 (inc i-point-index)) :angle (+ angle-offset angle)
                             :track (if get-next (:at-ticks next-track) track) :collider new-collider)]
